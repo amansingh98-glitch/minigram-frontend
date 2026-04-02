@@ -1,0 +1,77 @@
+import { API_BASE_URL } from "../config";
+
+export const toggleFollow = async (userId) => {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${API_BASE_URL}/follow/toggle/${userId}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const raw = await response.text();
+
+  if (!response.ok) {
+    throw new Error(raw || "Failed to toggle follow");
+  }
+
+  return raw ? JSON.parse(raw) : {};
+};
+
+export const getFollowersCount = async (userId) => {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${API_BASE_URL}/follow/followers-count/${userId}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const raw = await response.text();
+
+  if (!response.ok) {
+    throw new Error(raw || "Failed to fetch followers count");
+  }
+
+  return raw ? JSON.parse(raw) : 0;
+};
+
+export const getFollowingCount = async (userId) => {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${API_BASE_URL}/follow/following-count/${userId}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const raw = await response.text();
+
+  if (!response.ok) {
+    throw new Error(raw || "Failed to fetch following count");
+  }
+
+  return raw ? JSON.parse(raw) : 0;
+};
+
+export const getFollowStatus = async (userId) => {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${API_BASE_URL}/follow/status/${userId}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const raw = await response.text();
+
+  if (!response.ok) {
+    throw new Error(raw || "Failed to fetch follow status");
+  }
+
+  return raw ? JSON.parse(raw) : {};
+};

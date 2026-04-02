@@ -1,0 +1,575 @@
+import React, { useEffect, useState } from "react";
+import {
+  addComment,
+  deleteComment,
+  deletePost,
+} from "../services/postService";
+import { toggleLike } from "../services/likeService";
+
+const Feed = ({
+  posts = [],
+  loading,
+  onCommentAdded,
+  onUserClick,
+  onMessageUser,
+}) => {
+  const [commentInputs, setCommentInputs] = useState({});
+  const [likeLoading, setLikeLoading] = useState({});
+  const [deletePostLoading, setDeletePostLoading] = useState({});
+  const [deleteCommentLoading, setDeleteCommentLoading] = useState({});
+  const [localPosts, setLocalPosts] = useState(posts);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    setLocalPosts(posts);
+  }, [posts]);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const handleInputChange = (postId, value) => {
+    setCommentInputs((prev) => ({
+      ...prev,
+      [postId]: value,
+    }));
+  };
+
+  const handleAddComment = async (postId) => {
+    const text = commentInputs[postId];
+    if (!text?.trim()) return;
+
+    try {
+      await addComment(postId, text);
+
+      setCommentInputs((prev) => ({
+        ...prev,
+        [postId]: "",
+      }));
+
+      if (onCommentAdded) {
+        await onCommentAdded();
+      }
+    } catch (error) {
+      console.error("Comment add error:", error);
+    }
+  };
+
+  const handleToggleLike = async (postId) => {
+    try {
+      setLikeLoading((prev) => ({ ...prev, [postId]: true }));
+      const result = await toggleLike(postId);
+
+      setLocalPosts((prev) =>
+        prev.map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                likeCount:
+                  typeof result.likeCount === "number"
+                    ? result.likeCount
+                    : post.likeCount,
+                likedByCurrentUser:
+                  typeof result.liked === "boolean"
+                    ? result.liked
+                    : !post.likedByCurrentUser,
+              }
+            : post
+        )
+      );
+    } catch (error) {
+      console.error("Like toggle error:", error);
+    } finally {
+      setLikeLoading((prev) => ({ ...prev, [postId]: false }));
+    }
+  };
+
+  const handleDeletePost = async (postId) => {
+    try {
+      setDeletePostLoading((prev) => ({ ...prev, [postId]: true }));
+      await deletePost(postId);
+
+      setLocalPosts((prev) => prev.filter((post) => post.id !== postId));
+
+      if (onCommentAdded) {
+        await onCommentAdded();
+      }
+    } catch (error) {
+      console.error("Post delete error:", error);
+      alert("Failed to delete post");
+    } finally {
+      setDeletePostLoading((prev) => ({ ...prev, [postId]: false }));
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    try {
+      setDeleteCommentLoading((prev) => ({ ...prev, [commentId]: true }));
+      await deleteComment(commentId);
+
+      if (onCommentAdded) {
+        await onCommentAdded();
+      }
+    } catch (error) {
+      console.error("Comment delete error:", error);
+      alert("Failed to delete comment");
+    } finally {
+      setDeleteCommentLoading((prev) => ({ ...prev, [commentId]: false }));
+    }
+  };
+
+  if (loading) {
+    return <div style={styles.infoCard}>Loading posts...</div>;
+  }
+
+  if (!localPosts.length) {
+    return <div style={styles.infoCard}>No posts yet.</div>;
+  }
+
+  return (
+    <div style={styles.feedWrap}>
+      {localPosts.map((post) => {
+        const mediaUrl = post.imageUrl || post.videoUrl;
+        const isVideo =
+          mediaUrl &&
+          (mediaUrl.endsWith(".mp4") ||
+            mediaUrl.endsWith(".webm") ||
+            mediaUrl.endsWith(".ogg"));
+
+        return (
+          <div
+            key={post.id}
+            style={{
+              ...styles.postCard,
+              borderRadius: isMobile ? "18px" : "24px",
+            }}
+          >
+            <div
+              style={{
+                ...styles.postHeader,
+                flexDirection: isMobile ? "column" : "row",
+                alignItems: isMobile ? "flex-start" : "center",
+                padding: isMobile ? "12px" : "16px",
+              }}
+            >
+              <div style={styles.headerTopRow}>
+                {post.profileImageUrl ? (
+                  <img
+                    src={post.profileImageUrl}
+                    alt={post.userName}
+                    style={styles.avatar}
+                    onClick={() => onUserClick && onUserClick(post.userId)}
+                  />
+                ) : (
+                  <div
+                    style={styles.avatarPlaceholder}
+                    onClick={() => onUserClick && onUserClick(post.userId)}
+                  >
+                    {(post.userName || "U").charAt(0).toUpperCase()}
+                  </div>
+                )}
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    style={styles.userName}
+                    onClick={() => onUserClick && onUserClick(post.userId)}
+                  >
+                    {post.userName}
+                  </div>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  ...styles.topActionWrap,
+                  width: isMobile ? "100%" : "auto",
+                  justifyContent: isMobile ? "flex-start" : "flex-end",
+                }}
+              >
+                <button
+                  style={{
+                    ...styles.messageButton,
+                    width: isMobile ? "100%" : "auto",
+                  }}
+                  onClick={() =>
+                    onMessageUser &&
+                    onMessageUser({
+                      userId: post.userId,
+                      username: post.userName,
+                      email: post.userEmail,
+                      profileImageUrl: post.profileImageUrl,
+                    })
+                  }
+                >
+                  Message
+                </button>
+
+                {post.currentUserPost && (
+                  <button
+                    style={{
+                      ...styles.deleteButton,
+                      width: isMobile ? "100%" : "auto",
+                    }}
+                    onClick={() => handleDeletePost(post.id)}
+                    disabled={deletePostLoading[post.id]}
+                  >
+                    {deletePostLoading[post.id] ? "Deleting..." : "Delete Post"}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {post.content && (
+              <div
+                style={{
+                  ...styles.postContent,
+                  padding: isMobile ? "0 12px 12px 12px" : "0 16px 14px 16px",
+                }}
+              >
+                {post.content}
+              </div>
+            )}
+
+            {mediaUrl && (
+              <div style={styles.mediaWrap}>
+                {isVideo ? (
+                  <video
+                    style={{
+                      ...styles.media,
+                      maxHeight: isMobile ? "300px" : "520px",
+                    }}
+                    controls
+                  >
+                    <source src={mediaUrl} />
+                  </video>
+                ) : (
+                  <img
+                    src={mediaUrl}
+                    alt="post"
+                    style={{
+                      ...styles.media,
+                      maxHeight: isMobile ? "300px" : "520px",
+                    }}
+                  />
+                )}
+              </div>
+            )}
+
+            <div
+              style={{
+                ...styles.footer,
+                padding: isMobile ? "12px" : "14px 16px 16px 16px",
+              }}
+            >
+              <div style={styles.actions}>
+                <button
+                  style={{
+                    ...styles.actionBtn,
+                    ...(post.likedByCurrentUser ? styles.likedBtn : {}),
+                    flex: isMobile ? 1 : "unset",
+                  }}
+                  onClick={() => handleToggleLike(post.id)}
+                  disabled={likeLoading[post.id]}
+                >
+                  {likeLoading[post.id]
+                    ? "..."
+                    : post.likedByCurrentUser
+                    ? `❤️ ${post.likeCount || 0}`
+                    : `🤍 ${post.likeCount || 0}`}
+                </button>
+
+                <button
+                  style={{
+                    ...styles.secondaryBtn,
+                    flex: isMobile ? 1 : "unset",
+                  }}
+                >
+                  💬 {(post.comments && post.comments.length) || 0}
+                </button>
+              </div>
+
+              <div
+                style={{
+                  ...styles.commentBar,
+                  flexDirection: isMobile ? "column" : "row",
+                }}
+              >
+                <input
+                  value={commentInputs[post.id] || ""}
+                  onChange={(e) => handleInputChange(post.id, e.target.value)}
+                  placeholder="Write a comment..."
+                  style={{
+                    ...styles.commentInput,
+                    minWidth: isMobile ? "100%" : "180px",
+                    width: isMobile ? "100%" : "auto",
+                  }}
+                />
+                <button
+                  style={{
+                    ...styles.commentBtn,
+                    width: isMobile ? "100%" : "auto",
+                  }}
+                  onClick={() => handleAddComment(post.id)}
+                >
+                  Add Comment
+                </button>
+              </div>
+
+              {post.comments?.length > 0 && (
+                <div style={styles.commentList}>
+                  {post.comments.map((comment, idx) => (
+                    <div key={idx} style={styles.commentItem}>
+                      <div
+                        style={{
+                          ...styles.commentTop,
+                          flexDirection: isMobile ? "column" : "row",
+                          alignItems: isMobile ? "flex-start" : "center",
+                        }}
+                      >
+                        <div style={styles.commentUser}>{comment.userName}</div>
+
+                        {comment.currentUserComment && (
+                          <button
+                            style={styles.commentDeleteBtn}
+                            onClick={() => handleDeleteComment(comment.id)}
+                            disabled={deleteCommentLoading[comment.id]}
+                          >
+                            {deleteCommentLoading[comment.id]
+                              ? "Deleting..."
+                              : "Delete"}
+                          </button>
+                        )}
+                      </div>
+
+                      <div style={styles.commentText}>{comment.text}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+const styles = {
+  feedWrap: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "18px",
+    width: "100%",
+  },
+
+  infoCard: {
+    background: "#ffffff",
+    border: "1px solid #e5e7eb",
+    borderRadius: "24px",
+    padding: "20px",
+    color: "#6b7280",
+  },
+
+  postCard: {
+    background: "#ffffff",
+    border: "1px solid #e5e7eb",
+    overflow: "hidden",
+    width: "100%",
+  },
+
+  postHeader: {
+    display: "flex",
+    gap: "12px",
+  },
+
+  headerTopRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    width: "100%",
+    minWidth: 0,
+  },
+
+  avatar: {
+    width: "44px",
+    height: "44px",
+    borderRadius: "50%",
+    objectFit: "cover",
+    cursor: "pointer",
+    flexShrink: 0,
+  },
+
+  avatarPlaceholder: {
+    width: "44px",
+    height: "44px",
+    borderRadius: "50%",
+    background: "#dbeafe",
+    color: "#1d4ed8",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "700",
+    cursor: "pointer",
+    flexShrink: 0,
+  },
+
+  userName: {
+    fontSize: "16px",
+    fontWeight: "700",
+    color: "#1f2937",
+    cursor: "pointer",
+    wordBreak: "break-word",
+  },
+
+  topActionWrap: {
+    display: "flex",
+    gap: "8px",
+    flexWrap: "wrap",
+  },
+
+  messageButton: {
+    border: "none",
+    background: "#eff6ff",
+    color: "#1d4ed8",
+    padding: "10px 12px",
+    borderRadius: "12px",
+    cursor: "pointer",
+    fontWeight: "600",
+  },
+
+  deleteButton: {
+    border: "none",
+    background: "#fef2f2",
+    color: "#dc2626",
+    padding: "10px 12px",
+    borderRadius: "12px",
+    cursor: "pointer",
+    fontWeight: "600",
+  },
+
+  postContent: {
+    color: "#1f2937",
+    lineHeight: "1.5",
+    wordBreak: "break-word",
+  },
+
+  mediaWrap: {
+    width: "100%",
+    background: "#f3f4f6",
+  },
+
+  media: {
+    width: "100%",
+    objectFit: "cover",
+    display: "block",
+  },
+
+  footer: {
+    borderTop: "1px solid #f1f5f9",
+  },
+
+  actions: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+    marginBottom: "12px",
+  },
+
+  actionBtn: {
+    border: "none",
+    background: "#f3f4f6",
+    color: "#374151",
+    padding: "10px 14px",
+    borderRadius: "12px",
+    cursor: "pointer",
+    fontWeight: "600",
+  },
+
+  likedBtn: {
+    background: "#fef2f2",
+    color: "#dc2626",
+  },
+
+  secondaryBtn: {
+    border: "none",
+    background: "#f3f4f6",
+    color: "#374151",
+    padding: "10px 14px",
+    borderRadius: "12px",
+    cursor: "pointer",
+    fontWeight: "600",
+  },
+
+  commentBar: {
+    display: "flex",
+    gap: "10px",
+    width: "100%",
+  },
+
+  commentInput: {
+    flex: 1,
+    border: "1px solid #d1d5db",
+    borderRadius: "12px",
+    padding: "10px 12px",
+    outline: "none",
+    boxSizing: "border-box",
+  },
+
+  commentBtn: {
+    border: "none",
+    background: "#2563eb",
+    color: "#ffffff",
+    padding: "10px 14px",
+    borderRadius: "12px",
+    cursor: "pointer",
+    fontWeight: "600",
+  },
+
+  commentList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+    marginTop: "12px",
+  },
+
+  commentItem: {
+    background: "#f8fafc",
+    borderRadius: "12px",
+    padding: "10px 12px",
+  },
+
+  commentTop: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "10px",
+  },
+
+  commentUser: {
+    fontSize: "13px",
+    fontWeight: "700",
+    color: "#1f2937",
+    wordBreak: "break-word",
+  },
+
+  commentDeleteBtn: {
+    border: "none",
+    background: "#fee2e2",
+    color: "#dc2626",
+    padding: "6px 10px",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontWeight: "600",
+    fontSize: "12px",
+  },
+
+  commentText: {
+    fontSize: "14px",
+    color: "#374151",
+    marginTop: "6px",
+    wordBreak: "break-word",
+  },
+};
+
+export default Feed;
