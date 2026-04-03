@@ -9,7 +9,13 @@ export const registerUser = async (userData) => {
     body: JSON.stringify(userData),
   });
 
-  return response.text();
+  const raw = await response.text();
+
+  if (!response.ok) {
+    throw new Error(raw || "Register failed");
+  }
+
+  return raw;
 };
 
 export const loginUser = async (loginData) => {
@@ -21,41 +27,29 @@ export const loginUser = async (loginData) => {
     body: JSON.stringify(loginData),
   });
 
-  return response.json();
-};
-
-export const sendForgotPasswordOtp = async (email) => {
-  const response = await fetch(`${API_BASE_URL}/users/forgot-password/send-otp`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ email }),
-  });
-
   const raw = await response.text();
 
   if (!response.ok) {
-    throw new Error(raw || "Failed to send OTP");
+    throw new Error(raw || "Login failed");
   }
 
-  return raw;
-};
+  const data = raw ? JSON.parse(raw) : {};
 
-export const resetPasswordWithOtp = async ({ email, otp, newPassword }) => {
-  const response = await fetch(`${API_BASE_URL}/users/forgot-password/reset`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ email, otp, newPassword }),
-  });
-
-  const raw = await response.text();
-
-  if (!response.ok) {
-    throw new Error(raw || "Failed to reset password");
+  if (data.token) {
+    localStorage.setItem("token", data.token);
   }
 
-  return raw;
+  if (data.email) {
+    localStorage.setItem("userEmail", data.email);
+  }
+
+  if (data.username) {
+    localStorage.setItem("username", data.username);
+  }
+
+  if (data.profileImageUrl) {
+    localStorage.setItem("profileImageUrl", data.profileImageUrl);
+  }
+
+  return data;
 };

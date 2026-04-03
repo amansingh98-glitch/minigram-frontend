@@ -1,13 +1,10 @@
 import { useState } from "react";
 import AuthCard from "../components/AuthCard";
-
 import {
   loginUser,
   resetPasswordWithOtp,
   sendForgotPasswordOtp,
 } from "../services/authService";
-
-
 
 function LoginPage({ onSwitchToRegister, onLoginSuccess }) {
   const [email, setEmail] = useState("");
@@ -31,17 +28,31 @@ function LoginPage({ onSwitchToRegister, onLoginSuccess }) {
     try {
       const data = await loginUser({ email, password });
 
-      setMessage(data.message);
-      setIsError(!data.token);
-
-      if (data.token) {
+      if (data?.token) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("userEmail", email);
-        onLoginSuccess();
+
+        if (data.username) {
+          localStorage.setItem("username", data.username);
+        }
+
+        if (data.profileImageUrl) {
+          localStorage.setItem("profileImageUrl", data.profileImageUrl);
+        }
+
+        setMessage(data.message || "Login successful");
+        setIsError(false);
+
+        if (onLoginSuccess) {
+          onLoginSuccess();
+        }
+      } else {
+        setMessage(data?.message || "Login failed");
+        setIsError(true);
       }
     } catch (error) {
-      console.error(error);
-      setMessage("Login failed");
+      console.error("Login error:", error);
+      setMessage(error.message || "Login failed");
       setIsError(true);
     }
   };
@@ -55,11 +66,11 @@ function LoginPage({ onSwitchToRegister, onLoginSuccess }) {
 
     try {
       const result = await sendForgotPasswordOtp(forgotEmail);
-      setMessage(result);
+      setMessage(result || "OTP sent successfully");
       setIsError(false);
       setOtpSent(true);
     } catch (error) {
-      console.error(error);
+      console.error("Send OTP error:", error);
       setMessage(error.message || "Failed to send OTP");
       setIsError(true);
     }
@@ -79,7 +90,7 @@ function LoginPage({ onSwitchToRegister, onLoginSuccess }) {
         newPassword,
       });
 
-      setMessage(result);
+      setMessage(result || "Password reset successful");
       setIsError(false);
       setForgotMode(false);
       setOtpSent(false);
@@ -87,7 +98,7 @@ function LoginPage({ onSwitchToRegister, onLoginSuccess }) {
       setOtp("");
       setNewPassword("");
     } catch (error) {
-      console.error(error);
+      console.error("Reset password error:", error);
       setMessage(error.message || "Failed to reset password");
       setIsError(true);
     }
@@ -161,6 +172,7 @@ function LoginPage({ onSwitchToRegister, onLoginSuccess }) {
               setForgotEmail("");
               setOtp("");
               setNewPassword("");
+              setIsError(false);
             }}
           >
             Back to Login
