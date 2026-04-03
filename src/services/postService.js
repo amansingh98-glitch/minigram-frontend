@@ -1,13 +1,24 @@
 import { API_BASE_URL } from "../config";
 
-export const deletePost = async (postId) => {
+const getAuthHeaders = () => {
   const token = localStorage.getItem("token");
+  return {
+    Authorization: `Bearer ${token}`,
+  };
+};
 
+const parseJsonSafely = (raw) => {
+  try {
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    return null;
+  }
+};
+
+export const deletePost = async (postId) => {
   const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
     method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
   });
 
   const raw = await response.text();
@@ -20,13 +31,9 @@ export const deletePost = async (postId) => {
 };
 
 export const deleteComment = async (commentId) => {
-  const token = localStorage.getItem("token");
-
   const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
     method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
   });
 
   const raw = await response.text();
@@ -39,8 +46,6 @@ export const deleteComment = async (commentId) => {
 };
 
 export const createPost = async (content, imageFile) => {
-  const token = localStorage.getItem("token");
-
   const formData = new FormData();
   formData.append("content", content);
 
@@ -50,9 +55,7 @@ export const createPost = async (content, imageFile) => {
 
   const response = await fetch(`${API_BASE_URL}/posts`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
     body: formData,
   });
 
@@ -66,13 +69,9 @@ export const createPost = async (content, imageFile) => {
 };
 
 export const getAllPosts = async () => {
-  const token = localStorage.getItem("token");
-
   const response = await fetch(`${API_BASE_URL}/posts`, {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
   });
 
   const raw = await response.text();
@@ -81,17 +80,16 @@ export const getAllPosts = async () => {
     throw new Error(raw || "Failed to fetch posts");
   }
 
-  return raw ? JSON.parse(raw) : [];
+  const data = parseJsonSafely(raw);
+  return data || [];
 };
 
 export const addComment = async (postId, text) => {
-  const token = localStorage.getItem("token");
-
   const response = await fetch(`${API_BASE_URL}/comments/${postId}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+      ...getAuthHeaders(),
     },
     body: JSON.stringify({ text }),
   });
@@ -106,13 +104,9 @@ export const addComment = async (postId, text) => {
 };
 
 export const toggleLike = async (postId) => {
-  const token = localStorage.getItem("token");
-
   const response = await fetch(`${API_BASE_URL}/likes/toggle/${postId}`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
   });
 
   const raw = await response.text();
@@ -121,5 +115,6 @@ export const toggleLike = async (postId) => {
     throw new Error(raw || "Failed to toggle like");
   }
 
-  return raw ? JSON.parse(raw) : {};
+  const data = parseJsonSafely(raw);
+  return data || {};
 };
