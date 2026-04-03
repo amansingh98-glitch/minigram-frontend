@@ -214,7 +214,6 @@ const styles = {
       "linear-gradient(135deg, #f5f7ff 0%, #eef2ff 45%, #f8fafc 100%)",
     padding: "20px",
   },
-
   card: {
     width: "100%",
     maxWidth: "420px",
@@ -224,12 +223,10 @@ const styles = {
     boxShadow: "0 20px 50px rgba(37, 99, 235, 0.10)",
     border: "1px solid #e5e7eb",
   },
-
   brand: {
     textAlign: "center",
     marginBottom: "28px",
   },
-
   title: {
     fontSize: "48px",
     fontWeight: "800",
@@ -237,17 +234,14 @@ const styles = {
     color: "#111827",
     letterSpacing: "-1px",
   },
-
   subtitle: {
     margin: 0,
     color: "#6b7280",
     fontSize: "16px",
   },
-
   inputGroup: {
     marginBottom: "16px",
   },
-
   input: {
     width: "100%",
     padding: "14px 16px",
@@ -258,7 +252,6 @@ const styles = {
     boxSizing: "border-box",
     background: "#f9fafb",
   },
-
   button: {
     width: "100%",
     padding: "14px",
@@ -272,7 +265,6 @@ const styles = {
     marginTop: "10px",
     boxShadow: "0 10px 20px rgba(37, 99, 235, 0.20)",
   },
-
   messageSuccess: {
     marginTop: "18px",
     padding: "12px",
@@ -283,7 +275,6 @@ const styles = {
     textAlign: "center",
     border: "1px solid #a7f3d0",
   },
-
   messageError: {
     marginTop: "18px",
     padding: "12px",
@@ -294,7 +285,6 @@ const styles = {
     textAlign: "center",
     border: "1px solid #fecaca",
   },
-
   switchText: {
     marginTop: "18px",
     textAlign: "center",
@@ -306,4 +296,3 @@ const styles = {
 };
 
 export default LoginPage;
-//new code
