@@ -41,6 +41,8 @@ export const loginUser = async (loginData) => {
 
   if (data.email) {
     localStorage.setItem("userEmail", data.email);
+  } else if (loginData.email) {
+    localStorage.setItem("userEmail", loginData.email);
   }
 
   if (data.username) {
@@ -52,4 +54,40 @@ export const loginUser = async (loginData) => {
   }
 
   return data;
+};
+
+export const sendForgotPasswordOtp = async (email) => {
+  const response = await fetch(`${API_BASE_URL}/users/forgot-password/send-otp`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email }),
+  });
+
+  const raw = await response.text();
+
+  if (!response.ok) {
+    throw new Error(raw || "Failed to send OTP");
+  }
+
+  return raw;
+};
+
+export const resetPasswordWithOtp = async ({ email, otp, newPassword }) => {
+  const response = await fetch(`${API_BASE_URL}/users/forgot-password/reset`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, otp, newPassword }),
+  });
+
+  const raw = await response.text();
+
+  if (!response.ok) {
+    throw new Error(raw || "Failed to reset password");
+  }
+
+  return raw;
 };
