@@ -4,6 +4,10 @@ const getUserEmail = () => {
   return localStorage.getItem("userEmail") || "";
 };
 
+const getToken = () => {
+  return localStorage.getItem("token") || "";
+};
+
 export const getAllPosts = async () => {
   const userEmail = getUserEmail();
 
@@ -68,7 +72,7 @@ export const deletePost = async (postId) => {
 };
 
 export const addComment = async (postId, text) => {
-  const token = localStorage.getItem("token");
+  const token = getToken();
 
   const response = await fetch(`${API_BASE_URL}/comments/${postId}`, {
     method: "POST",
@@ -89,7 +93,7 @@ export const addComment = async (postId, text) => {
 };
 
 export const deleteComment = async (commentId) => {
-  const token = localStorage.getItem("token");
+  const token = getToken();
 
   const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
     method: "DELETE",
@@ -108,7 +112,7 @@ export const deleteComment = async (commentId) => {
 };
 
 export const toggleLike = async (postId) => {
-  const token = localStorage.getItem("token");
+  const token = getToken();
 
   const response = await fetch(`${API_BASE_URL}/likes/toggle/${postId}`, {
     method: "POST",
