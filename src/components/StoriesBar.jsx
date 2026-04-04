@@ -1,21 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { getStories, uploadStory } from "../services/storyService";
 import StoryViewer from "./StoryViewer";
-import { API_BASE_URL } from "../config";
-
-const resolveMediaUrl = (url) => {
-  if (!url) return "";
-
-  if (url.startsWith("http://localhost:8080")) {
-    return url.replace("http://localhost:8080", API_BASE_URL);
-  }
-
-  if (url.startsWith("/")) {
-    return `${API_BASE_URL}${url}`;
-  }
-
-  return url;
-};
+import { resolveMediaUrl } from "../utils/media";
 
 const StoriesBar = () => {
   const [stories, setStories] = useState([]);
@@ -134,6 +120,7 @@ const StoriesBar = () => {
           currentIndex={selectedStoryIndex}
           onClose={closeViewer}
           onChangeIndex={setSelectedStoryIndex}
+          currentUserEmail={localStorage.getItem("userEmail") || ""}
         />
       )}
     </>

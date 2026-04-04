@@ -1,6 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 
-const StoryViewer = ({ stories = [], currentIndex = 0, onClose, onChangeIndex }) => {
+const StoryViewer = ({
+  stories = [],
+  currentIndex = 0,
+  onClose,
+  onChangeIndex,
+  currentUserEmail = "",
+}) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [showViewers, setShowViewers] = useState(false);
 
@@ -12,18 +18,13 @@ const StoryViewer = ({ stories = [], currentIndex = 0, onClose, onChangeIndex })
 
   useEffect(() => {
     if (!stories.length) return;
-
     const currentStory = stories[currentIndex];
     if (!currentStory) return;
-
     if (currentStory.mediaType === "VIDEO") return;
 
     const timer = setTimeout(() => {
-      if (currentIndex < stories.length - 1) {
-        onChangeIndex(currentIndex + 1);
-      } else {
-        onClose();
-      }
+      if (currentIndex < stories.length - 1) onChangeIndex(currentIndex + 1);
+      else onClose();
     }, 3000);
 
     return () => clearTimeout(timer);
@@ -39,31 +40,25 @@ const StoryViewer = ({ stories = [], currentIndex = 0, onClose, onChangeIndex })
   if (!story) return null;
 
   const isVideo = story.mediaType === "VIDEO";
+  const isOwner =
+    !!currentUserEmail &&
+    !!story.userEmail &&
+    currentUserEmail.toLowerCase() === story.userEmail.toLowerCase();
 
   const viewers = useMemo(() => {
-    if (Array.isArray(story.viewers)) return story.viewers;
-    return [];
+    return Array.isArray(story.viewers) ? story.viewers : [];
   }, [story]);
 
   const viewersCount =
-    typeof story.viewersCount === "number"
-      ? story.viewersCount
-      : Array.isArray(story.viewers)
-      ? story.viewers.length
-      : 0;
+    typeof story.viewersCount === "number" ? story.viewersCount : viewers.length;
 
   const goPrev = () => {
-    if (currentIndex > 0) {
-      onChangeIndex(currentIndex - 1);
-    }
+    if (currentIndex > 0) onChangeIndex(currentIndex - 1);
   };
 
   const goNext = () => {
-    if (currentIndex < stories.length - 1) {
-      onChangeIndex(currentIndex + 1);
-    } else {
-      onClose();
-    }
+    if (currentIndex < stories.length - 1) onChangeIndex(currentIndex + 1);
+    else onClose();
   };
 
   return (
@@ -98,11 +93,7 @@ const StoryViewer = ({ stories = [], currentIndex = 0, onClose, onChangeIndex })
           <div style={styles.headerRow}>
             <div style={styles.userInfo}>
               {story.profileImageUrl ? (
-                <img
-                  src={story.profileImageUrl}
-                  alt={story.username}
-                  style={styles.avatar}
-                />
+                <img src={story.profileImageUrl} alt={story.username} style={styles.avatar} />
               ) : (
                 <div style={styles.avatarPlaceholder}>
                   {story.username?.charAt(0)?.toUpperCase() || "U"}
@@ -111,9 +102,7 @@ const StoryViewer = ({ stories = [], currentIndex = 0, onClose, onChangeIndex })
               <span style={styles.username}>{story.username}</span>
             </div>
 
-            <button style={styles.closeBtn} onClick={onClose}>
-              ✕
-            </button>
+            <button style={styles.closeBtn} onClick={onClose}>✕</button>
           </div>
         </div>
 
@@ -121,26 +110,19 @@ const StoryViewer = ({ stories = [], currentIndex = 0, onClose, onChangeIndex })
           {!isVideo ? (
             <img src={story.mediaUrl} alt="story" style={styles.media} />
           ) : (
-            <video
-              src={story.mediaUrl}
-              controls
-              autoPlay
-              style={styles.media}
-              onEnded={goNext}
-            />
+            <video src={story.mediaUrl} controls autoPlay style={styles.media} onEnded={goNext} />
           )}
         </div>
 
-        <div style={styles.bottomBar}>
-          <button
-            style={styles.showBtn}
-            onClick={() => setShowViewers((prev) => !prev)}
-          >
-            {showViewers ? "Hide viewers" : `Show viewers (${viewersCount})`}
-          </button>
-        </div>
+        {isOwner && (
+          <div style={styles.bottomBar}>
+            <button style={styles.showBtn} onClick={() => setShowViewers((p) => !p)}>
+              {showViewers ? "Hide viewers" : `Show viewers (${viewersCount})`}
+            </button>
+          </div>
+        )}
 
-        {showViewers && (
+        {isOwner && showViewers && (
           <div style={styles.viewersPanel}>
             <div style={styles.viewersTitle}>Viewed by</div>
 
@@ -158,20 +140,14 @@ const StoryViewer = ({ stories = [], currentIndex = 0, onClose, onChangeIndex })
                       />
                     ) : (
                       <div style={styles.viewerAvatarFallback}>
-                        {(viewer.username || viewer.email || "U")
-                          .charAt(0)
-                          .toUpperCase()}
+                        {(viewer.username || viewer.email || "U").charAt(0).toUpperCase()}
                       </div>
                     )}
                   </div>
 
                   <div style={styles.viewerMeta}>
-                    <div style={styles.viewerName}>
-                      {viewer.username || "User"}
-                    </div>
-                    <div style={styles.viewerEmail}>
-                      {viewer.email || ""}
-                    </div>
+                    <div style={styles.viewerName}>{viewer.username || "User"}</div>
+                    <div style={styles.viewerEmail}>{viewer.email || ""}</div>
                   </div>
                 </div>
               ))
@@ -192,10 +168,7 @@ const StoryViewer = ({ stories = [], currentIndex = 0, onClose, onChangeIndex })
         </button>
 
         <button
-          style={{
-            ...styles.navBtn,
-            right: isMobile ? "8px" : "12px",
-          }}
+          style={{ ...styles.navBtn, right: isMobile ? "8px" : "12px" }}
           onClick={goNext}
         >
           ›
@@ -206,223 +179,33 @@ const StoryViewer = ({ stories = [], currentIndex = 0, onClose, onChangeIndex })
 };
 
 const styles = {
-  overlay: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(0,0,0,0.75)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 3000,
-  },
-
-  viewer: {
-    position: "relative",
-    background: "#111827",
-    overflow: "hidden",
-    display: "flex",
-    flexDirection: "column",
-  },
-
-  topBar: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-    padding: "12px",
-  },
-
-  progressWrap: {
-    display: "flex",
-    gap: "6px",
-    marginBottom: "12px",
-  },
-
-  progressTrack: {
-    flex: 1,
-    height: "4px",
-    background: "rgba(255,255,255,0.25)",
-    borderRadius: "999px",
-    overflow: "hidden",
-  },
-
-  progressFill: {
-    height: "100%",
-    background: "#ffffff",
-    transition: "width 0.3s ease",
-  },
-
-  headerRow: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-
-  userInfo: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    color: "#ffffff",
-  },
-
-  avatar: {
-    width: "36px",
-    height: "36px",
-    borderRadius: "50%",
-    objectFit: "cover",
-  },
-
-  avatarPlaceholder: {
-    width: "36px",
-    height: "36px",
-    borderRadius: "50%",
-    background: "#dbeafe",
-    color: "#1d4ed8",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: "700",
-  },
-
-  username: {
-    fontWeight: "700",
-    fontSize: "14px",
-  },
-
-  closeBtn: {
-    border: "none",
-    background: "transparent",
-    color: "#ffffff",
-    fontSize: "24px",
-    cursor: "pointer",
-  },
-
-  mediaArea: {
-    flex: 1,
-    width: "100%",
-    height: "100%",
-  },
-
-  media: {
-    width: "100%",
-    height: "100%",
-    objectFit: "contain",
-    background: "#000000",
-  },
-
-  bottomBar: {
-    position: "absolute",
-    bottom: "12px",
-    left: "12px",
-    right: "12px",
-    zIndex: 20,
-    display: "flex",
-    justifyContent: "center",
-  },
-
-  showBtn: {
-    border: "none",
-    background: "rgba(17, 24, 39, 0.85)",
-    color: "#ffffff",
-    padding: "10px 14px",
-    borderRadius: "12px",
-    cursor: "pointer",
-    fontWeight: "600",
-  },
-
-  viewersPanel: {
-    position: "absolute",
-    left: "12px",
-    right: "12px",
-    bottom: "60px",
-    maxHeight: "220px",
-    overflowY: "auto",
-    background: "rgba(17, 24, 39, 0.92)",
-    border: "1px solid rgba(255,255,255,0.12)",
-    borderRadius: "16px",
-    padding: "12px",
-    zIndex: 25,
-  },
-
-  viewersTitle: {
-    color: "#ffffff",
-    fontWeight: "700",
-    marginBottom: "10px",
-  },
-
-  emptyViewers: {
-    color: "#d1d5db",
-    fontSize: "14px",
-  },
-
-  viewerRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    padding: "8px 0",
-    borderBottom: "1px solid rgba(255,255,255,0.08)",
-  },
-
-  viewerAvatar: {
-    width: "38px",
-    height: "38px",
-  },
-
-  viewerAvatarImg: {
-    width: "38px",
-    height: "38px",
-    borderRadius: "50%",
-    objectFit: "cover",
-  },
-
-  viewerAvatarFallback: {
-    width: "38px",
-    height: "38px",
-    borderRadius: "50%",
-    background: "#dbeafe",
-    color: "#1d4ed8",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: "700",
-  },
-
-  viewerMeta: {
-    minWidth: 0,
-  },
-
-  viewerName: {
-    color: "#ffffff",
-    fontWeight: "600",
-    fontSize: "14px",
-  },
-
-  viewerEmail: {
-    color: "#d1d5db",
-    fontSize: "12px",
-    wordBreak: "break-word",
-  },
-
-  navBtn: {
-    position: "absolute",
-    top: "50%",
-    transform: "translateY(-50%)",
-    border: "none",
-    background: "rgba(255,255,255,0.28)",
-    color: "#ffffff",
-    width: "42px",
-    height: "42px",
-    borderRadius: "50%",
-    fontSize: "28px",
-    lineHeight: "42px",
-    textAlign: "center",
-    cursor: "pointer",
-    zIndex: 20,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 3000 },
+  viewer: { position: "relative", background: "#111827", overflow: "hidden", display: "flex", flexDirection: "column" },
+  topBar: { position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, padding: "12px" },
+  progressWrap: { display: "flex", gap: "6px", marginBottom: "12px" },
+  progressTrack: { flex: 1, height: "4px", background: "rgba(255,255,255,0.25)", borderRadius: "999px", overflow: "hidden" },
+  progressFill: { height: "100%", background: "#ffffff", transition: "width 0.3s ease" },
+  headerRow: { display: "flex", alignItems: "center", justifyContent: "space-between" },
+  userInfo: { display: "flex", alignItems: "center", gap: "10px", color: "#ffffff" },
+  avatar: { width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover" },
+  avatarPlaceholder: { width: "36px", height: "36px", borderRadius: "50%", background: "#dbeafe", color: "#1d4ed8", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700" },
+  username: { fontWeight: "700", fontSize: "14px" },
+  closeBtn: { border: "none", background: "transparent", color: "#ffffff", fontSize: "24px", cursor: "pointer" },
+  mediaArea: { flex: 1, width: "100%", height: "100%" },
+  media: { width: "100%", height: "100%", objectFit: "contain", background: "#000000" },
+  bottomBar: { position: "absolute", bottom: "12px", left: "12px", right: "12px", zIndex: 20, display: "flex", justifyContent: "center" },
+  showBtn: { border: "none", background: "rgba(17, 24, 39, 0.85)", color: "#ffffff", padding: "10px 14px", borderRadius: "12px", cursor: "pointer", fontWeight: "600" },
+  viewersPanel: { position: "absolute", left: "12px", right: "12px", bottom: "60px", maxHeight: "220px", overflowY: "auto", background: "rgba(17, 24, 39, 0.92)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "16px", padding: "12px", zIndex: 25 },
+  viewersTitle: { color: "#ffffff", fontWeight: "700", marginBottom: "10px" },
+  emptyViewers: { color: "#d1d5db", fontSize: "14px" },
+  viewerRow: { display: "flex", alignItems: "center", gap: "10px", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.08)" },
+  viewerAvatar: { width: "38px", height: "38px" },
+  viewerAvatarImg: { width: "38px", height: "38px", borderRadius: "50%", objectFit: "cover" },
+  viewerAvatarFallback: { width: "38px", height: "38px", borderRadius: "50%", background: "#dbeafe", color: "#1d4ed8", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700" },
+  viewerMeta: { minWidth: 0 },
+  viewerName: { color: "#ffffff", fontWeight: "600", fontSize: "14px" },
+  viewerEmail: { color: "#d1d5db", fontSize: "12px", wordBreak: "break-word" },
+  navBtn: { position: "absolute", top: "50%", transform: "translateY(-50%)", border: "none", background: "rgba(255,255,255,0.28)", color: "#ffffff", width: "42px", height: "42px", borderRadius: "50%", fontSize: "28px", lineHeight: "42px", textAlign: "center", cursor: "pointer", zIndex: 20, display: "flex", alignItems: "center", justifyContent: "center" },
 };
 
 export default StoryViewer;
