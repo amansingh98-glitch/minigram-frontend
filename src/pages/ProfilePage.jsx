@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { API_BASE_URL } from "../config";
 import {
   editProfile,
   getMyProfile,
@@ -6,6 +7,20 @@ import {
   uploadProfileImage,
 } from "../services/userService";
 import { toggleFollow as toggleFollowApi } from "../services/followService";
+
+const resolveImageUrl = (url) => {
+  if (!url) return "";
+
+  if (url.startsWith("http://localhost:8080")) {
+    return url.replace("http://localhost:8080", API_BASE_URL);
+  }
+
+  if (url.startsWith("/")) {
+    return `${API_BASE_URL}${url}`;
+  }
+
+  return url;
+};
 
 const ProfilePage = ({ userId, onMessageUser }) => {
   const [profile, setProfile] = useState(null);
@@ -104,7 +119,7 @@ const ProfilePage = ({ userId, onMessageUser }) => {
           <div style={styles.imageSection}>
             {profile.profileImageUrl ? (
               <img
-                src={profile.profileImageUrl}
+                src={resolveImageUrl(profile.profileImageUrl)}
                 alt={profile.username}
                 style={styles.profileImage}
               />
@@ -232,7 +247,7 @@ const ProfilePage = ({ userId, onMessageUser }) => {
                       userId: profile.id,
                       username: profile.username,
                       email: profile.email,
-                      profileImageUrl: profile.profileImageUrl,
+                      profileImageUrl: resolveImageUrl(profile.profileImageUrl),
                     })
                   }
                 >
@@ -249,7 +264,11 @@ const ProfilePage = ({ userId, onMessageUser }) => {
           {profile.posts.map((post) => (
             <div key={post.id} style={styles.postCard}>
               {post.imageUrl ? (
-                <img src={post.imageUrl} alt="post" style={styles.postImage} />
+                <img
+                  src={resolveImageUrl(post.imageUrl)}
+                  alt="post"
+                  style={styles.postImage}
+                />
               ) : (
                 <div style={styles.postContent}>{post.content}</div>
               )}

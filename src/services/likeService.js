@@ -1,14 +1,18 @@
 import { API_BASE_URL } from "../config";
 
-export const toggleLike = async (postId) => {
-  const token = localStorage.getItem("token");
+const getUserEmail = () => {
+  return localStorage.getItem("userEmail") || "";
+};
 
-  const response = await fetch(`${API_BASE_URL}/likes/toggle/${postId}`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export const toggleLike = async (postId) => {
+  const userEmail = getUserEmail();
+
+  const response = await fetch(
+    `${API_BASE_URL}/likes/toggle/${postId}?userEmail=${encodeURIComponent(userEmail)}`,
+    {
+      method: "POST",
+    }
+  );
 
   const raw = await response.text();
 
@@ -16,5 +20,9 @@ export const toggleLike = async (postId) => {
     throw new Error(raw || "Failed to toggle like");
   }
 
-  return raw ? JSON.parse(raw) : {};
+  try {
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
 };
