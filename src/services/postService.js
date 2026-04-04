@@ -1,53 +1,34 @@
 import { API_BASE_URL } from "../config";
 
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("token");
-  return {
-    Authorization: `Bearer ${token}`,
-  };
+const getUserEmail = () => {
+  return localStorage.getItem("userEmail") || "";
 };
 
-const parseJsonSafely = (raw) => {
-  try {
-    return raw ? JSON.parse(raw) : null;
-  } catch (error) {
-    return null;
-  }
-};
+export const getAllPosts = async () => {
+  const userEmail = getUserEmail();
 
-export const deletePost = async (postId) => {
-  const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
-    method: "DELETE",
-    headers: getAuthHeaders(),
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/posts?userEmail=${encodeURIComponent(userEmail)}`,
+    {
+      method: "GET",
+    }
+  );
 
   const raw = await response.text();
 
   if (!response.ok) {
-    throw new Error(raw || "Failed to delete post");
+    throw new Error(raw || "Failed to fetch posts");
   }
 
-  return raw;
-};
-
-export const deleteComment = async (commentId) => {
-  const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
-    method: "DELETE",
-    headers: getAuthHeaders(),
-  });
-
-  const raw = await response.text();
-
-  if (!response.ok) {
-    throw new Error(raw || "Failed to delete comment");
-  }
-
-  return raw;
+  return raw ? JSON.parse(raw) : [];
 };
 
 export const createPost = async (content, imageFile) => {
+  const userEmail = getUserEmail();
+
   const formData = new FormData();
   formData.append("content", content);
+  formData.append("userEmail", userEmail);
 
   if (imageFile) {
     formData.append("image", imageFile);
@@ -55,7 +36,6 @@ export const createPost = async (content, imageFile) => {
 
   const response = await fetch(`${API_BASE_URL}/posts`, {
     method: "POST",
-    headers: getAuthHeaders(),
     body: formData,
   });
 
@@ -68,28 +48,33 @@ export const createPost = async (content, imageFile) => {
   return raw;
 };
 
-export const getAllPosts = async () => {
-  const response = await fetch(`${API_BASE_URL}/posts`, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
+export const deletePost = async (postId) => {
+  const userEmail = getUserEmail();
+
+  const response = await fetch(
+    `${API_BASE_URL}/posts/${postId}?userEmail=${encodeURIComponent(userEmail)}`,
+    {
+      method: "DELETE",
+    }
+  );
 
   const raw = await response.text();
 
   if (!response.ok) {
-    throw new Error(raw || "Failed to fetch posts");
+    throw new Error(raw || "Failed to delete post");
   }
 
-  const data = parseJsonSafely(raw);
-  return data || [];
+  return raw;
 };
 
 export const addComment = async (postId, text) => {
+  const token = localStorage.getItem("token");
+
   const response = await fetch(`${API_BASE_URL}/comments/${postId}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...getAuthHeaders(),
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ text }),
   });
@@ -103,10 +88,33 @@ export const addComment = async (postId, text) => {
   return raw;
 };
 
+export const deleteComment = async (commentId) => {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const raw = await response.text();
+
+  if (!response.ok) {
+    throw new Error(raw || "Failed to delete comment");
+  }
+
+  return raw;
+};
+
 export const toggleLike = async (postId) => {
+  const token = localStorage.getItem("token");
+
   const response = await fetch(`${API_BASE_URL}/likes/toggle/${postId}`, {
     method: "POST",
-    headers: getAuthHeaders(),
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
 
   const raw = await response.text();
@@ -115,6 +123,5 @@ export const toggleLike = async (postId) => {
     throw new Error(raw || "Failed to toggle like");
   }
 
-  const data = parseJsonSafely(raw);
-  return data || {};
+  return raw ? JSON.parse(raw) : {};
 };
