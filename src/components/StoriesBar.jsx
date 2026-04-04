@@ -1,6 +1,21 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { getStories, uploadStory } from "../services/storyService";
 import StoryViewer from "./StoryViewer";
+import { API_BASE_URL } from "../config";
+
+const resolveMediaUrl = (url) => {
+  if (!url) return "";
+
+  if (url.startsWith("http://localhost:8080")) {
+    return url.replace("http://localhost:8080", API_BASE_URL);
+  }
+
+  if (url.startsWith("/")) {
+    return `${API_BASE_URL}${url}`;
+  }
+
+  return url;
+};
 
 const StoriesBar = () => {
   const [stories, setStories] = useState([]);
@@ -34,7 +49,6 @@ const StoriesBar = () => {
     }
   };
 
-  // ek user ek hi baar story bar me dikhe
   const groupedStories = useMemo(() => {
     const map = new Map();
 
@@ -58,7 +72,13 @@ const StoriesBar = () => {
   }, [stories]);
 
   const openUserStories = (userGroup, index = 0) => {
-    setSelectedUserStories(userGroup.stories || []);
+    const normalizedStories = (userGroup.stories || []).map((story) => ({
+      ...story,
+      profileImageUrl: resolveMediaUrl(story.profileImageUrl),
+      mediaUrl: resolveMediaUrl(story.mediaUrl),
+    }));
+
+    setSelectedUserStories(normalizedStories);
     setSelectedStoryIndex(index);
   };
 
@@ -88,7 +108,7 @@ const StoriesBar = () => {
             <div className="story-avatar">
               {group.profileImageUrl ? (
                 <img
-                  src={group.profileImageUrl}
+                  src={resolveMediaUrl(group.profileImageUrl)}
                   alt={group.username}
                   style={{
                     width: "100%",

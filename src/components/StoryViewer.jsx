@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 const StoryViewer = ({ stories = [], currentIndex = 0, onClose, onChangeIndex }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [showViewers, setShowViewers] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -28,12 +29,28 @@ const StoryViewer = ({ stories = [], currentIndex = 0, onClose, onChangeIndex })
     return () => clearTimeout(timer);
   }, [stories, currentIndex, onChangeIndex, onClose]);
 
+  useEffect(() => {
+    setShowViewers(false);
+  }, [currentIndex]);
+
   if (!stories.length) return null;
 
   const story = stories[currentIndex];
   if (!story) return null;
 
   const isVideo = story.mediaType === "VIDEO";
+
+  const viewers = useMemo(() => {
+    if (Array.isArray(story.viewers)) return story.viewers;
+    return [];
+  }, [story]);
+
+  const viewersCount =
+    typeof story.viewersCount === "number"
+      ? story.viewersCount
+      : Array.isArray(story.viewers)
+      ? story.viewers.length
+      : 0;
 
   const goPrev = () => {
     if (currentIndex > 0) {
@@ -114,7 +131,54 @@ const StoryViewer = ({ stories = [], currentIndex = 0, onClose, onChangeIndex })
           )}
         </div>
 
-        {/* Left Button */}
+        <div style={styles.bottomBar}>
+          <button
+            style={styles.showBtn}
+            onClick={() => setShowViewers((prev) => !prev)}
+          >
+            {showViewers ? "Hide viewers" : `Show viewers (${viewersCount})`}
+          </button>
+        </div>
+
+        {showViewers && (
+          <div style={styles.viewersPanel}>
+            <div style={styles.viewersTitle}>Viewed by</div>
+
+            {viewers.length === 0 ? (
+              <div style={styles.emptyViewers}>No viewer data available</div>
+            ) : (
+              viewers.map((viewer, index) => (
+                <div key={viewer.id || viewer.email || index} style={styles.viewerRow}>
+                  <div style={styles.viewerAvatar}>
+                    {viewer.profileImageUrl ? (
+                      <img
+                        src={viewer.profileImageUrl}
+                        alt={viewer.username || viewer.email || "viewer"}
+                        style={styles.viewerAvatarImg}
+                      />
+                    ) : (
+                      <div style={styles.viewerAvatarFallback}>
+                        {(viewer.username || viewer.email || "U")
+                          .charAt(0)
+                          .toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={styles.viewerMeta}>
+                    <div style={styles.viewerName}>
+                      {viewer.username || "User"}
+                    </div>
+                    <div style={styles.viewerEmail}>
+                      {viewer.email || ""}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
         <button
           style={{
             ...styles.navBtn,
@@ -127,7 +191,6 @@ const StoryViewer = ({ stories = [], currentIndex = 0, onClose, onChangeIndex })
           ‹
         </button>
 
-        {/* Right Button */}
         <button
           style={{
             ...styles.navBtn,
@@ -246,6 +309,99 @@ const styles = {
     height: "100%",
     objectFit: "contain",
     background: "#000000",
+  },
+
+  bottomBar: {
+    position: "absolute",
+    bottom: "12px",
+    left: "12px",
+    right: "12px",
+    zIndex: 20,
+    display: "flex",
+    justifyContent: "center",
+  },
+
+  showBtn: {
+    border: "none",
+    background: "rgba(17, 24, 39, 0.85)",
+    color: "#ffffff",
+    padding: "10px 14px",
+    borderRadius: "12px",
+    cursor: "pointer",
+    fontWeight: "600",
+  },
+
+  viewersPanel: {
+    position: "absolute",
+    left: "12px",
+    right: "12px",
+    bottom: "60px",
+    maxHeight: "220px",
+    overflowY: "auto",
+    background: "rgba(17, 24, 39, 0.92)",
+    border: "1px solid rgba(255,255,255,0.12)",
+    borderRadius: "16px",
+    padding: "12px",
+    zIndex: 25,
+  },
+
+  viewersTitle: {
+    color: "#ffffff",
+    fontWeight: "700",
+    marginBottom: "10px",
+  },
+
+  emptyViewers: {
+    color: "#d1d5db",
+    fontSize: "14px",
+  },
+
+  viewerRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    padding: "8px 0",
+    borderBottom: "1px solid rgba(255,255,255,0.08)",
+  },
+
+  viewerAvatar: {
+    width: "38px",
+    height: "38px",
+  },
+
+  viewerAvatarImg: {
+    width: "38px",
+    height: "38px",
+    borderRadius: "50%",
+    objectFit: "cover",
+  },
+
+  viewerAvatarFallback: {
+    width: "38px",
+    height: "38px",
+    borderRadius: "50%",
+    background: "#dbeafe",
+    color: "#1d4ed8",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "700",
+  },
+
+  viewerMeta: {
+    minWidth: 0,
+  },
+
+  viewerName: {
+    color: "#ffffff",
+    fontWeight: "600",
+    fontSize: "14px",
+  },
+
+  viewerEmail: {
+    color: "#d1d5db",
+    fontSize: "12px",
+    wordBreak: "break-word",
   },
 
   navBtn: {
