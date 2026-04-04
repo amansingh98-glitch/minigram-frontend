@@ -72,15 +72,14 @@ export const deletePost = async (postId) => {
 };
 
 export const addComment = async (postId, text) => {
-  const token = getToken();
+  const userEmail = getUserEmail();
 
   const response = await fetch(`${API_BASE_URL}/comments/${postId}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, userEmail }),
   });
 
   const raw = await response.text();
@@ -93,14 +92,14 @@ export const addComment = async (postId, text) => {
 };
 
 export const deleteComment = async (commentId) => {
-  const token = getToken();
+  const userEmail = getUserEmail();
 
-  const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/comments/${commentId}?userEmail=${encodeURIComponent(userEmail)}`,
+    {
+      method: "DELETE",
+    }
+  );
 
   const raw = await response.text();
 
@@ -112,14 +111,14 @@ export const deleteComment = async (commentId) => {
 };
 
 export const toggleLike = async (postId) => {
-  const token = getToken();
+  const userEmail = getUserEmail();
 
-  const response = await fetch(`${API_BASE_URL}/likes/toggle/${postId}`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/likes/toggle/${postId}?userEmail=${encodeURIComponent(userEmail)}`,
+    {
+      method: "POST",
+    }
+  );
 
   const raw = await response.text();
 
