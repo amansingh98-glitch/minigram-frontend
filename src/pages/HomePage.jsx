@@ -8,6 +8,7 @@ import RightPanel from "../components/RightPanel";
 import ProfilePage from "./ProfilePage";
 import ChatPage from "./ChatPage";
 import SearchPage from "./SearchPage";
+import SearchPage from "./SettingPage";
 import { createPost, getAllPosts } from "../services/postService";
 import { getMyProfile } from "../services/userService";
 import { resolveMediaUrl } from "../utils/media";
