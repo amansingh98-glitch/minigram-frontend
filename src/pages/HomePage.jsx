@@ -154,7 +154,6 @@ const HomePage = ({ onLogout }) => {
   };
 
   const handleNavigate = (pageKey) => {
-    // explore abhi real page nahi hai, isliye home par hi rakho
     if (pageKey === "explore") {
       setActivePage("home");
       return;
@@ -273,10 +272,7 @@ const HomePage = ({ onLogout }) => {
               ✉️
             </span>
 
-            <span
-              style={styles.topIcon}
-              title="Notifications"
-            >
+            <span style={styles.topIcon} title="Notifications">
               🔔
             </span>
 
