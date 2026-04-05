@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { searchUsers } from "../services/userService";
 import { toggleFollow } from "../services/followService";
+import { resolveMediaUrl } from "../utils/media";
 
 const SearchPage = ({ onUserClick, onMessageUser }) => {
   const [keyword, setKeyword] = useState("");
@@ -25,7 +26,15 @@ const SearchPage = ({ onUserClick, onMessageUser }) => {
 
       setLoading(true);
       const data = await searchUsers(value);
-      setUsers(Array.isArray(data) ? data : []);
+
+      const normalized = Array.isArray(data)
+        ? data.map((user) => ({
+            ...user,
+            profileImageUrl: resolveMediaUrl(user.profileImageUrl),
+          }))
+        : [];
+
+      setUsers(normalized);
     } catch (error) {
       console.error("Search error:", error);
       setUsers([]);
@@ -39,7 +48,14 @@ const SearchPage = ({ onUserClick, onMessageUser }) => {
       await toggleFollow(userId);
 
       const updated = await searchUsers(keyword);
-      setUsers(Array.isArray(updated) ? updated : []);
+      const normalized = Array.isArray(updated)
+        ? updated.map((user) => ({
+            ...user,
+            profileImageUrl: resolveMediaUrl(user.profileImageUrl),
+          }))
+        : [];
+
+      setUsers(normalized);
     } catch (error) {
       console.error("Follow toggle error:", error);
     }
@@ -146,26 +162,22 @@ const styles = {
     gap: "18px",
     width: "100%",
   },
-
   headerCard: {
     background: "#ffffff",
     border: "1px solid #e5e7eb",
     borderRadius: "24px",
     padding: "20px",
   },
-
   title: {
     margin: 0,
     fontWeight: "700",
     color: "#1f2937",
   },
-
   subtitle: {
     margin: "8px 0 14px 0",
     color: "#6b7280",
     fontSize: "14px",
   },
-
   searchInput: {
     width: "100%",
     padding: "14px 16px",
@@ -175,7 +187,6 @@ const styles = {
     outline: "none",
     boxSizing: "border-box",
   },
-
   infoCard: {
     background: "#ffffff",
     border: "1px solid #e5e7eb",
@@ -183,13 +194,11 @@ const styles = {
     padding: "20px",
     color: "#6b7280",
   },
-
   list: {
     display: "flex",
     flexDirection: "column",
     gap: "14px",
   },
-
   userCard: {
     display: "flex",
     justifyContent: "space-between",
@@ -199,7 +208,6 @@ const styles = {
     borderRadius: "20px",
     padding: "16px",
   },
-
   userLeft: {
     display: "flex",
     alignItems: "center",
@@ -208,7 +216,6 @@ const styles = {
     cursor: "pointer",
     flex: 1,
   },
-
   avatar: {
     width: "52px",
     height: "52px",
@@ -216,7 +223,6 @@ const styles = {
     objectFit: "cover",
     flexShrink: 0,
   },
-
   avatarPlaceholder: {
     width: "52px",
     height: "52px",
@@ -229,27 +235,23 @@ const styles = {
     fontWeight: "700",
     flexShrink: 0,
   },
-
   userName: {
     fontSize: "16px",
     fontWeight: "700",
     color: "#1f2937",
     wordBreak: "break-word",
   },
-
   userEmail: {
     fontSize: "13px",
     color: "#6b7280",
     marginTop: "4px",
     wordBreak: "break-word",
   },
-
   userActions: {
     display: "flex",
     gap: "10px",
     flexWrap: "wrap",
   },
-
   followBtn: {
     border: "none",
     background: "#2563eb",
@@ -259,7 +261,6 @@ const styles = {
     cursor: "pointer",
     fontWeight: "700",
   },
-
   messageBtn: {
     border: "1px solid #bfdbfe",
     background: "#eff6ff",
