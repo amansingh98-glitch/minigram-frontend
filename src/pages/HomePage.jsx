@@ -8,30 +8,10 @@ import RightPanel from "../components/RightPanel";
 import ProfilePage from "./ProfilePage";
 import ChatPage from "./ChatPage";
 import SearchPage from "./SearchPage";
+import SettingsPage from "./SettingsPage";
 import { createPost, getAllPosts } from "../services/postService";
 import { getMyProfile } from "../services/userService";
 import { resolveMediaUrl } from "../utils/media";
-
-const ExplorePage = () => (
-  <div style={styles.infoCard}>
-    <h2 style={styles.infoTitle}>Explore</h2>
-    <p style={styles.infoText}>Explore page ready hai. Abhi yahan trending/discovery content add karna baaki hai.</p>
-  </div>
-);
-
-const SettingsPage = () => (
-  <div style={styles.infoCard}>
-    <h2 style={styles.infoTitle}>Settings</h2>
-    <p style={styles.infoText}>Settings page ready hai. Abhi change password / account actions yahan connect karne hain.</p>
-  </div>
-);
-
-const NotificationsPage = () => (
-  <div style={styles.infoCard}>
-    <h2 style={styles.infoTitle}>Notifications</h2>
-    <p style={styles.infoText}>Notifications page ka UI placeholder ready hai.</p>
-  </div>
-);
 
 const HomePage = ({ onLogout }) => {
   const [activePage, setActivePage] = useState("home");
@@ -174,6 +154,12 @@ const HomePage = ({ onLogout }) => {
   };
 
   const handleNavigate = (pageKey) => {
+    // explore abhi real page nahi hai, isliye home par hi rakho
+    if (pageKey === "explore") {
+      setActivePage("home");
+      return;
+    }
+
     setActivePage(pageKey);
 
     if (pageKey === "profile") {
@@ -204,16 +190,8 @@ const HomePage = ({ onLogout }) => {
       );
     }
 
-    if (activePage === "explore") {
-      return <ExplorePage />;
-    }
-
     if (activePage === "settings") {
-      return <SettingsPage />;
-    }
-
-    if (activePage === "notifications") {
-      return <NotificationsPage />;
+      return <SettingsPage onLogout={onLogout} />;
     }
 
     return (
@@ -297,7 +275,6 @@ const HomePage = ({ onLogout }) => {
 
             <span
               style={styles.topIcon}
-              onClick={() => setActivePage("notifications")}
               title="Notifications"
             >
               🔔
@@ -465,26 +442,6 @@ const styles = {
 
   rightContent: {
     width: "340px",
-  },
-
-  infoCard: {
-    background: "#ffffff",
-    border: "1px solid #e5e7eb",
-    borderRadius: "24px",
-    padding: "20px",
-  },
-
-  infoTitle: {
-    margin: 0,
-    fontSize: "24px",
-    color: "#1f2937",
-  },
-
-  infoText: {
-    marginTop: "10px",
-    color: "#6b7280",
-    fontSize: "14px",
-    lineHeight: "1.6",
   },
 };
 
