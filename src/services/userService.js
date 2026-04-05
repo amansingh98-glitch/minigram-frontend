@@ -1,53 +1,49 @@
 import { API_BASE_URL } from "../config";
 
+const getAuthHeader = () => {
+  const token = localStorage.getItem("token");
+  return {
+    Authorization: `Bearer ${token}`,
+  };
+};
+
 export const getMyProfile = async () => {
-  const token = localStorage.getItem("token");
-
   const response = await fetch(`${API_BASE_URL}/users/me`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch my profile");
-  }
-
-  return response.json();
-};
-
-export const getUserProfile = async (userId) => {
-  const token = localStorage.getItem("token");
-
-  const response = await fetch(`${API_BASE_URL}/users/profile/${userId}`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch user profile");
-  }
-
-  return response.json();
-};
-
-export const editProfile = async ({ username, bio }) => {
-  const token = localStorage.getItem("token");
-
-  const response = await fetch(`${API_BASE_URL}/users/edit-profile`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ username, bio }),
+    headers: getAuthHeader(),
   });
 
   const raw = await response.text();
+  if (!response.ok) {
+    throw new Error(raw || "Failed to fetch my profile");
+  }
 
+  return raw ? JSON.parse(raw) : null;
+};
+
+export const getUserProfile = async (userId) => {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+    headers: getAuthHeader(),
+  });
+
+  const raw = await response.text();
+  if (!response.ok) {
+    throw new Error(raw || "Failed to fetch user profile");
+  }
+
+  return raw ? JSON.parse(raw) : null;
+};
+
+export const editProfile = async (data) => {
+  const response = await fetch(`${API_BASE_URL}/users/profile`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeader(),
+    },
+    body: JSON.stringify(data),
+  });
+
+  const raw = await response.text();
   if (!response.ok) {
     throw new Error(raw || "Failed to update profile");
   }
@@ -55,25 +51,24 @@ export const editProfile = async ({ username, bio }) => {
   return raw;
 };
 
-export const uploadProfileImage = async (imageFile) => {
-  const token = localStorage.getItem("token");
-
+export const uploadProfileImage = async (file) => {
   const formData = new FormData();
-  formData.append("image", imageFile);
+  formData.append("image", file);
 
-  const response = await fetch(`${API_BASE_URL}/users/profile-image`, {
+  const response = await fetch(`${API_BASE_URL}/users/profile/image`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${token}`,
+      ...getAuthHeader(),
     },
     body: formData,
   });
 
+  const raw = await response.text();
   if (!response.ok) {
-    throw new Error("Failed to upload profile image");
+    throw new Error(raw || "Failed to upload profile image");
   }
 
-  return response.text();
+  return raw;
 };
 
 export const getSuggestedUsers = async () => {
