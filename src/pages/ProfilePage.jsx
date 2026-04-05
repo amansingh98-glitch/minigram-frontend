@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import { API_BASE_URL } from "../config";
 import {
   editProfile,
   getMyProfile,
@@ -7,20 +6,7 @@ import {
   uploadProfileImage,
 } from "../services/userService";
 import { toggleFollow as toggleFollowApi } from "../services/followService";
-
-const resolveImageUrl = (url) => {
-  if (!url) return "";
-
-  if (url.startsWith("http://localhost:8080")) {
-    return url.replace("http://localhost:8080", API_BASE_URL);
-  }
-
-  if (url.startsWith("/")) {
-    return `${API_BASE_URL}${url}`;
-  }
-
-  return url;
-};
+import { resolveMediaUrl } from "../utils/media";
 
 const ProfilePage = ({ userId, onMessageUser }) => {
   const [profile, setProfile] = useState(null);
@@ -39,9 +25,31 @@ const ProfilePage = ({ userId, onMessageUser }) => {
     try {
       setLoading(true);
       const data = userId ? await getUserProfile(userId) : await getMyProfile();
-      setProfile(data || null);
-      setEditUsername(data?.username || "");
-      setEditBio(data?.bio || "");
+
+      const normalized = data
+        ? {
+            ...data,
+            profileImageUrl: resolveMediaUrl(data.profileImageUrl),
+            posts: Array.isArray(data.posts)
+              ? data.posts.map((post) => ({
+                  ...post,
+                  imageUrl: resolveMediaUrl(post.imageUrl),
+                  videoUrl: resolveMediaUrl(post.videoUrl),
+                }))
+              : [],
+          }
+        : null;
+
+      setProfile(normalized);
+      setEditUsername(normalized?.username || "");
+      setEditBio(normalized?.bio || "");
+
+      if (!userId && normalized?.profileImageUrl) {
+        localStorage.setItem("profileImageUrl", normalized.profileImageUrl);
+      }
+      if (!userId && normalized?.username) {
+        localStorage.setItem("username", normalized.username);
+      }
     } catch (error) {
       console.error("Profile load error:", error);
       setProfile(null);
@@ -91,8 +99,12 @@ const ProfilePage = ({ userId, onMessageUser }) => {
 
     try {
       setUploadingImage(true);
-      await uploadProfileImage(file);
+      const uploadedUrl = await uploadProfileImage(file);
+      if (uploadedUrl) {
+        localStorage.setItem("profileImageUrl", resolveMediaUrl(uploadedUrl));
+      }
       await loadProfile();
+      window.dispatchEvent(new Event("profile-updated"));
     } catch (error) {
       console.error("Profile image upload error:", error);
       alert("Failed to upload profile image");
@@ -119,7 +131,7 @@ const ProfilePage = ({ userId, onMessageUser }) => {
           <div style={styles.imageSection}>
             {profile.profileImageUrl ? (
               <img
-                src={resolveImageUrl(profile.profileImageUrl)}
+                src={profile.profileImageUrl}
                 alt={profile.username}
                 style={styles.profileImage}
               />
@@ -247,7 +259,7 @@ const ProfilePage = ({ userId, onMessageUser }) => {
                       userId: profile.id,
                       username: profile.username,
                       email: profile.email,
-                      profileImageUrl: resolveImageUrl(profile.profileImageUrl),
+                      profileImageUrl: profile.profileImageUrl,
                     })
                   }
                 >
@@ -264,11 +276,7 @@ const ProfilePage = ({ userId, onMessageUser }) => {
           {profile.posts.map((post) => (
             <div key={post.id} style={styles.postCard}>
               {post.imageUrl ? (
-                <img
-                  src={resolveImageUrl(post.imageUrl)}
-                  alt="post"
-                  style={styles.postImage}
-                />
+                <img src={post.imageUrl} alt="post" style={styles.postImage} />
               ) : (
                 <div style={styles.postContent}>{post.content}</div>
               )}
@@ -288,7 +296,6 @@ const styles = {
     width: "100%",
     overflowX: "hidden",
   },
-
   infoCard: {
     background: "#ffffff",
     border: "1px solid #e5e7eb",
@@ -296,7 +303,6 @@ const styles = {
     padding: "20px",
     color: "#6b7280",
   },
-
   headerCard: {
     background: "#ffffff",
     border: "1px solid #e5e7eb",
@@ -304,7 +310,6 @@ const styles = {
     padding: "24px",
     overflow: "hidden",
   },
-
   top: {
     display: "flex",
     gap: "24px",
@@ -312,14 +317,12 @@ const styles = {
     flexWrap: "wrap",
     width: "100%",
   },
-
   imageSection: {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     gap: "12px",
   },
-
   profileImage: {
     width: "120px",
     height: "120px",
@@ -327,7 +330,6 @@ const styles = {
     objectFit: "cover",
     border: "1px solid #d1d5db",
   },
-
   profileImagePlaceholder: {
     width: "120px",
     height: "120px",
@@ -340,7 +342,6 @@ const styles = {
     fontSize: "36px",
     fontWeight: "700",
   },
-
   imageUploadBtn: {
     border: "1px solid #bfdbfe",
     background: "#eff6ff",
@@ -350,21 +351,18 @@ const styles = {
     cursor: "pointer",
     fontWeight: "600",
   },
-
   userName: {
     fontSize: "28px",
     fontWeight: "700",
     color: "#1f2937",
     wordBreak: "break-word",
   },
-
   userEmail: {
     color: "#6b7280",
     marginTop: "6px",
     fontSize: "15px",
     wordBreak: "break-word",
   },
-
   bioText: {
     marginTop: "12px",
     fontSize: "14px",
@@ -373,7 +371,6 @@ const styles = {
     whiteSpace: "pre-wrap",
     wordBreak: "break-word",
   },
-
   editInput: {
     width: "100%",
     border: "1px solid #d1d5db",
@@ -382,7 +379,6 @@ const styles = {
     fontSize: "16px",
     outline: "none",
   },
-
   editTextarea: {
     width: "100%",
     minHeight: "90px",
@@ -394,14 +390,12 @@ const styles = {
     outline: "none",
     resize: "vertical",
   },
-
   stats: {
     display: "flex",
     flexWrap: "wrap",
     gap: "14px",
     marginTop: "16px",
   },
-
   statBox: {
     minWidth: "110px",
     background: "#f8fafc",
@@ -410,25 +404,21 @@ const styles = {
     padding: "14px 18px",
     flex: "1 1 110px",
   },
-
   statNumber: {
     fontSize: "28px",
     fontWeight: "700",
     color: "#1f2937",
   },
-
   statLabel: {
     fontSize: "14px",
     color: "#6b7280",
   },
-
   actions: {
     display: "flex",
     gap: "10px",
     marginTop: "18px",
     flexWrap: "wrap",
   },
-
   followBtn: {
     border: "none",
     background: "#2563eb",
@@ -438,7 +428,6 @@ const styles = {
     cursor: "pointer",
     fontWeight: "700",
   },
-
   messageBtn: {
     border: "1px solid #bfdbfe",
     background: "#eff6ff",
@@ -448,13 +437,11 @@ const styles = {
     cursor: "pointer",
     fontWeight: "700",
   },
-
   postsGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
     gap: "16px",
   },
-
   postCard: {
     background: "#ffffff",
     border: "1px solid #e5e7eb",
@@ -462,14 +449,12 @@ const styles = {
     overflow: "hidden",
     minHeight: "220px",
   },
-
   postImage: {
     width: "100%",
     height: "100%",
     maxHeight: "320px",
     objectFit: "cover",
   },
-
   postContent: {
     padding: "16px",
     color: "#374151",

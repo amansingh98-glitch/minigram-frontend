@@ -262,12 +262,10 @@ const styles = {
     minHeight: "100vh",
     fontFamily: "Arial, sans-serif",
   },
-
   mainArea: {
     marginLeft: "78px",
     minHeight: "100vh",
   },
-
   topbar: {
     position: "fixed",
     top: 0,
@@ -282,33 +280,28 @@ const styles = {
     padding: "0 28px",
     zIndex: 999,
   },
-
   brandSection: {
     display: "flex",
     alignItems: "center",
     gap: "14px",
   },
-
   brandAvatar: {
     width: "42px",
     height: "42px",
     borderRadius: "50%",
     backgroundColor: "#e5e7eb",
   },
-
   logo: {
     margin: 0,
     fontSize: "22px",
     fontWeight: "700",
     color: "#1f2937",
   },
-
   logoSub: {
     margin: "2px 0 0 0",
     fontSize: "13px",
     color: "#6b7280",
   },
-
   topIcons: {
     display: "flex",
     alignItems: "center",
@@ -316,12 +309,10 @@ const styles = {
     fontSize: "22px",
     color: "#6b7280",
   },
-
   topIcon: {
     cursor: "pointer",
     userSelect: "none",
   },
-
   currentUserBox: {
     display: "flex",
     alignItems: "center",
@@ -331,7 +322,6 @@ const styles = {
     borderRadius: "14px",
     maxWidth: "220px",
   },
-
   userProfileAvatar: {
     width: "34px",
     height: "34px",
@@ -345,7 +335,6 @@ const styles = {
     fontSize: "14px",
     flexShrink: 0,
   },
-
   userNavbarImage: {
     width: "34px",
     height: "34px",
@@ -354,7 +343,6 @@ const styles = {
     border: "1px solid #d1d5db",
     flexShrink: 0,
   },
-
   userBadge: {
     fontWeight: "600",
     color: "#374151",
@@ -363,23 +351,19 @@ const styles = {
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
   },
-
   contentWrapper: {
     display: "flex",
     gap: "24px",
     padding: "105px 24px 24px 24px",
     alignItems: "flex-start",
   },
-
   fullPageWrapper: {
     padding: "105px 24px 24px 24px",
   },
-
   leftContent: {
     flex: 1,
     minWidth: 0,
   },
-
   rightContent: {
     width: "340px",
   },
