@@ -1,179 +1,134 @@
 import React, { useEffect, useState } from "react";
 import { getSuggestedUsers } from "../services/userService";
 import { toggleFollow } from "../services/followService";
+import { resolveMediaUrl } from "../utils/media";
 
 const RightPanel = ({ onUserClick, onMessageUser }) => {
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [followLoading, setFollowLoading] = useState({});
 
-  const loadSuggestedUsers = async () => {
+  const loadSuggestions = async () => {
     try {
-      setLoading(true);
       const data = await getSuggestedUsers();
-      setUsers(Array.isArray(data) ? data : []);
+      const normalized = Array.isArray(data)
+        ? data.map((user) => ({
+            ...user,
+            profileImageUrl: resolveMediaUrl(user.profileImageUrl),
+          }))
+        : [];
+      setUsers(normalized);
     } catch (error) {
-      console.error("Error loading suggested users:", error);
+      console.error("Suggestions error:", error);
       setUsers([]);
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadSuggestedUsers();
+    loadSuggestions();
   }, []);
 
-  const handleFollowToggle = async (userId) => {
+  const handleFollow = async (userId) => {
     try {
-      setFollowLoading((prev) => ({
-        ...prev,
-        [userId]: true,
-      }));
-
-      const result = await toggleFollow(userId);
-
-      setUsers((prev) =>
-        prev.map((user) =>
-          user.id === userId
-            ? {
-                ...user,
-                followedByCurrentUser:
-                  typeof result.following === "boolean"
-                    ? result.following
-                    : !user.followedByCurrentUser,
-              }
-            : user
-        )
-      );
+      await toggleFollow(userId);
+      await loadSuggestions();
     } catch (error) {
-      console.error("Error toggling follow:", error);
-    } finally {
-      setFollowLoading((prev) => ({
-        ...prev,
-        [userId]: false,
-      }));
+      console.error("Follow error:", error);
     }
   };
 
   return (
-    <div style={styles.panel}>
-      <h3 style={styles.heading}>Suggested for you</h3>
+    <div style={styles.card}>
+      <h3 style={styles.title}>Suggested for you</h3>
 
-      {loading ? (
-        <p style={styles.infoText}>Loading suggestions...</p>
-      ) : users.length === 0 ? (
-        <p style={styles.infoText}>No suggestions available</p>
+      {users.length === 0 ? (
+        <div style={styles.empty}>No suggestions</div>
       ) : (
-        <div style={styles.userList}>
-          {users.map((user) => {
-            const initial = user.username
-              ? user.username.charAt(0).toUpperCase()
-              : "U";
-
-            return (
-              <div key={user.id} style={styles.userCard}>
-                <div
-                  style={styles.userLeft}
-                  onClick={() => onUserClick && onUserClick(user.id)}
-                >
-                  {user.profileImageUrl ? (
-                    <img
-                      src={user.profileImageUrl}
-                      alt={user.username}
-                      style={styles.userImage}
-                    />
-                  ) : (
-                    <div style={styles.userAvatar}>{initial}</div>
-                  )}
-
-                  <div style={{ minWidth: 0 }}>
-                    <div style={styles.userName}>{user.username}</div>
-                    <div style={styles.userEmail}>{user.email}</div>
-                  </div>
+        users.map((user) => (
+          <div key={user.id} style={styles.userRow}>
+            <div
+              style={styles.userLeft}
+              onClick={() => onUserClick && onUserClick(user.id)}
+            >
+              {user.profileImageUrl ? (
+                <img
+                  src={user.profileImageUrl}
+                  alt={user.username}
+                  style={styles.avatar}
+                />
+              ) : (
+                <div style={styles.avatarFallback}>
+                  {user.username?.charAt(0)?.toUpperCase() || "U"}
                 </div>
+              )}
 
-                <div style={styles.actionColumn}>
-                  <button
-                    style={styles.profileButton}
-                    onClick={() => onUserClick && onUserClick(user.id)}
-                  >
-                    Profile
-                  </button>
-
-                  <button
-                    style={styles.messageButton}
-                    onClick={() =>
-                      onMessageUser &&
-                      onMessageUser({
-                        userId: user.id,
-                        username: user.username,
-                        email: user.email,
-                        profileImageUrl: user.profileImageUrl,
-                      })
-                    }
-                  >
-                    Message
-                  </button>
-
-                  <button
-                    style={{
-                      ...styles.followButton,
-                      ...(user.followedByCurrentUser ? styles.followingButton : {}),
-                    }}
-                    onClick={() => handleFollowToggle(user.id)}
-                    disabled={followLoading[user.id]}
-                  >
-                    {followLoading[user.id]
-                      ? "..."
-                      : user.followedByCurrentUser
-                      ? "Following"
-                      : "Follow"}
-                  </button>
-                </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={styles.name}>{user.username}</div>
+                <div style={styles.email}>{user.email}</div>
               </div>
-            );
-          })}
-        </div>
+            </div>
+
+            <div style={styles.actions}>
+              <button
+                style={styles.profileBtn}
+                onClick={() => onUserClick && onUserClick(user.id)}
+              >
+                Profile
+              </button>
+
+              <button
+                style={styles.messageBtn}
+                onClick={() =>
+                  onMessageUser &&
+                  onMessageUser({
+                    userId: user.id,
+                    username: user.username,
+                    email: user.email,
+                    profileImageUrl: user.profileImageUrl,
+                  })
+                }
+              >
+                Message
+              </button>
+
+              <button
+                style={styles.followBtn}
+                onClick={() => handleFollow(user.id)}
+              >
+                {user.followedByCurrentUser ? "Following" : "Follow"}
+              </button>
+            </div>
+          </div>
+        ))
       )}
     </div>
   );
 };
 
 const styles = {
-  panel: {
+  card: {
     background: "#ffffff",
     border: "1px solid #e5e7eb",
     borderRadius: "24px",
-    padding: "20px",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
-    position: "sticky",
-    top: "104px",
+    padding: "18px",
   },
 
-  heading: {
-    margin: "0 0 18px 0",
+  title: {
+    margin: "0 0 14px 0",
     fontSize: "18px",
+    fontWeight: "700",
     color: "#1f2937",
   },
 
-  infoText: {
+  empty: {
     color: "#6b7280",
     fontSize: "14px",
-    margin: 0,
   },
 
-  userList: {
+  userRow: {
     display: "flex",
     flexDirection: "column",
-    gap: "14px",
-  },
-
-  userCard: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
     gap: "10px",
+    padding: "12px 0",
+    borderBottom: "1px solid #f1f5f9",
   },
 
   userLeft: {
@@ -182,21 +137,19 @@ const styles = {
     gap: "12px",
     cursor: "pointer",
     minWidth: 0,
-    flex: 1,
   },
 
-  userImage: {
-    width: "46px",
-    height: "46px",
+  avatar: {
+    width: "48px",
+    height: "48px",
     borderRadius: "50%",
     objectFit: "cover",
-    border: "1px solid #d1d5db",
     flexShrink: 0,
   },
 
-  userAvatar: {
-    width: "46px",
-    height: "46px",
+  avatarFallback: {
+    width: "48px",
+    height: "48px",
     borderRadius: "50%",
     background: "#dbeafe",
     color: "#1d4ed8",
@@ -204,67 +157,59 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     fontWeight: "700",
-    fontSize: "18px",
     flexShrink: 0,
   },
 
-  userName: {
+  name: {
     fontSize: "15px",
     fontWeight: "700",
     color: "#1f2937",
+    wordBreak: "break-word",
   },
 
-  userEmail: {
-    fontSize: "13px",
-    color: "#6b7280",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-    maxWidth: "140px",
-  },
-
-  actionColumn: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "6px",
-    flexShrink: 0,
-  },
-
-  profileButton: {
-    border: "1px solid #d1d5db",
-    background: "#ffffff",
-    color: "#374151",
-    padding: "7px 12px",
-    borderRadius: "10px",
-    cursor: "pointer",
-    fontWeight: "600",
+  email: {
     fontSize: "12px",
+    color: "#6b7280",
+    wordBreak: "break-word",
   },
 
-  messageButton: {
-    border: "1px solid #bfdbfe",
+  actions: {
+    display: "flex",
+    gap: "8px",
+    flexWrap: "wrap",
+  },
+
+  profileBtn: {
+    border: "1px solid #dbeafe",
     background: "#eff6ff",
     color: "#1d4ed8",
-    padding: "7px 12px",
+    padding: "7px 10px",
     borderRadius: "10px",
     cursor: "pointer",
-    fontWeight: "600",
     fontSize: "12px",
+    fontWeight: "600",
   },
 
-  followButton: {
+  messageBtn: {
+    border: "1px solid #ddd6fe",
+    background: "#f5f3ff",
+    color: "#6d28d9",
+    padding: "7px 10px",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontSize: "12px",
+    fontWeight: "600",
+  },
+
+  followBtn: {
     border: "none",
     background: "#2563eb",
     color: "#ffffff",
-    padding: "8px 14px",
-    borderRadius: "12px",
+    padding: "7px 10px",
+    borderRadius: "10px",
     cursor: "pointer",
+    fontSize: "12px",
     fontWeight: "700",
-    fontSize: "13px",
-  },
-
-  followingButton: {
-    background: "#111827",
   },
 };
 
