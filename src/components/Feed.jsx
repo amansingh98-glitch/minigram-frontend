@@ -6,6 +6,8 @@ import {
 } from "../services/postService";
 import { toggleLike } from "../services/likeService";
 
+import CommentModal from "./CommentModal";
+
 const Feed = ({
   posts = [],
   loading,
@@ -13,7 +15,7 @@ const Feed = ({
   onUserClick,
   onMessageUser,
 }) => {
-  const [commentInputs, setCommentInputs] = useState({});
+  const [activeCommentPostId, setActiveCommentPostId] = useState(null);
   const [likeLoading, setLikeLoading] = useState({});
   const [deletePostLoading, setDeletePostLoading] = useState({});
   const [deleteCommentLoading, setDeleteCommentLoading] = useState({});
@@ -30,24 +32,11 @@ const Feed = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const handleInputChange = (postId, value) => {
-    setCommentInputs((prev) => ({
-      ...prev,
-      [postId]: value,
-    }));
-  };
-
-  const handleAddComment = async (postId) => {
-    const text = commentInputs[postId];
-    if (!text?.trim()) return;
+  const handleAddComment = async (postId, text) => {
+    if (!text || !text.trim()) return;
 
     try {
       await addComment(postId, text);
-
-      setCommentInputs((prev) => ({
-        ...prev,
-        [postId]: "",
-      }));
 
       if (onCommentAdded) {
         await onCommentAdded();
@@ -286,69 +275,21 @@ const Feed = ({
                     ...styles.secondaryBtn,
                     flex: isMobile ? 1 : "unset",
                   }}
+                  onClick={() => setActiveCommentPostId(post.id)}
                 >
                   💬 {(post.comments && post.comments.length) || 0}
                 </button>
               </div>
 
-              <div
-                style={{
-                  ...styles.commentBar,
-                  flexDirection: isMobile ? "column" : "row",
-                }}
-              >
-                <input
-                  value={commentInputs[post.id] || ""}
-                  onChange={(e) => handleInputChange(post.id, e.target.value)}
-                  placeholder="Write a comment..."
-                  style={{
-                    ...styles.commentInput,
-                    minWidth: isMobile ? "100%" : "180px",
-                    width: isMobile ? "100%" : "auto",
-                  }}
-                />
-                <button
-                  style={{
-                    ...styles.commentBtn,
-                    width: isMobile ? "100%" : "auto",
-                  }}
-                  onClick={() => handleAddComment(post.id)}
-                >
-                  Add Comment
-                </button>
-              </div>
-
-              {post.comments?.length > 0 && (
-                <div style={styles.commentList}>
-                  {post.comments.map((comment, idx) => (
-                    <div key={idx} style={styles.commentItem}>
-                      <div
-                        style={{
-                          ...styles.commentTop,
-                          flexDirection: isMobile ? "column" : "row",
-                          alignItems: isMobile ? "flex-start" : "center",
-                        }}
-                      >
-                        <div style={styles.commentUser}>{comment.userName}</div>
-
-                        {comment.currentUserComment && (
-                          <button
-                            style={styles.commentDeleteBtn}
-                            onClick={() => handleDeleteComment(comment.id)}
-                            disabled={deleteCommentLoading[comment.id]}
-                          >
-                            {deleteCommentLoading[comment.id]
-                              ? "Deleting..."
-                              : "Delete"}
-                          </button>
-                        )}
-                      </div>
-
-                      <div style={styles.commentText}>{comment.text}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              {/* The Comments Bottom Sheet / Modal */}
+              <CommentModal
+                post={post}
+                isOpen={activeCommentPostId === post.id}
+                onClose={() => setActiveCommentPostId(null)}
+                onAddComment={handleAddComment}
+                onDeleteComment={handleDeleteComment}
+                deleteLoadingMap={deleteCommentLoading}
+              />
             </div>
           </div>
         );

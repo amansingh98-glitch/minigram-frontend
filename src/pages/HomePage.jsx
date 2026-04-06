@@ -329,7 +329,7 @@ const HomePage = ({ onLogout }) => {
       <div style={styles.mainArea(isMobile)}>
         <div style={styles.topbar(isMobile)}>
           <div style={styles.brandSection}>
-            <div style={styles.brandAvatar}></div>
+            <img src="/logo.png" alt="MiniGram Logo" style={styles.brandAvatar} />
             <div>
               <h1 style={styles.logo}>MiniGram</h1>
               {!isMobile && <p style={styles.logoSub}>Connect and share</p>}
@@ -483,8 +483,7 @@ const styles = {
   brandAvatar: {
     width: "42px",
     height: "42px",
-    borderRadius: "50%",
-    backgroundColor: "#e5e7eb",
+    objectFit: "contain",
     flexShrink: 0,
   },
 
