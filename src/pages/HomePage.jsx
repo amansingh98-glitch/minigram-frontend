@@ -350,7 +350,7 @@ const HomePage = ({ onLogout }) => {
                     notifications.map((item, index) => (
                       <div key={item.id || index} style={styles.notificationItem}>
                         <div style={styles.notificationMessage}>
-                          {item.message || "Notification"}
+                         {item.messageText || item.message || "Notification"}
                         </div>
                         {item.createdAt && (
                           <div style={styles.notificationTime}>
@@ -578,6 +578,11 @@ const styles = {
     fontSize: "11px",
     color: "#6b7280",
     marginTop: "4px",
+  },
+  notificationMeta:{
+    fontSize :"12px",
+    color :"#6b7280",
+    marginTop :"4px",
   },
 
   contentWrapper: (isMobile) => ({
