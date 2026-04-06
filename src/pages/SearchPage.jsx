@@ -115,7 +115,6 @@ const SearchPage = ({ onUserClick, onMessageUser }) => {
 
                 <div style={{ minWidth: 0 }}>
                   <div style={styles.userName}>{user.username}</div>
-                  <div style={styles.userEmail}>{user.email}</div>
                 </div>
               </div>
 
@@ -239,12 +238,6 @@ const styles = {
     fontSize: "16px",
     fontWeight: "700",
     color: "#1f2937",
-    wordBreak: "break-word",
-  },
-  userEmail: {
-    fontSize: "13px",
-    color: "#6b7280",
-    marginTop: "4px",
     wordBreak: "break-word",
   },
   userActions: {

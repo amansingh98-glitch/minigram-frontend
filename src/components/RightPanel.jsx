@@ -62,7 +62,6 @@ const RightPanel = ({ onUserClick, onMessageUser }) => {
 
               <div style={{ minWidth: 0 }}>
                 <div style={styles.name}>{user.username}</div>
-                <div style={styles.email}>{user.email}</div>
               </div>
             </div>
 
@@ -164,12 +163,6 @@ const styles = {
     fontSize: "15px",
     fontWeight: "700",
     color: "#1f2937",
-    wordBreak: "break-word",
-  },
-
-  email: {
-    fontSize: "12px",
-    color: "#6b7280",
     wordBreak: "break-word",
   },
 

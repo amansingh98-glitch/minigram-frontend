@@ -179,13 +179,12 @@ const ProfilePage = ({ userId, onMessageUser }) => {
                 />
               </>
             ) : (
-              <>
+              <div style={styles.profileInfoText}>
                 <div style={styles.userName}>{profile.username}</div>
-                <div style={styles.userEmail}>{profile.email}</div>
                 <div style={styles.bioText}>
                   {profile.bio?.trim() ? profile.bio : "No bio yet"}
                 </div>
-              </>
+              </div>
             )}
 
             <div style={styles.stats}>
@@ -302,6 +301,7 @@ const styles = {
     borderRadius: "24px",
     padding: "20px",
     color: "#6b7280",
+    textAlign: "center",
   },
   headerCard: {
     background: "#ffffff",
@@ -312,8 +312,8 @@ const styles = {
   },
   top: {
     display: "flex",
-    gap: "24px",
-    alignItems: "center",
+    gap: "32px",
+    alignItems: "flex-start",
     flexWrap: "wrap",
     width: "100%",
   },
@@ -321,144 +321,153 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: "12px",
+    gap: "16px",
+    flexShrink: 0,
   },
   profileImage: {
-    width: "120px",
-    height: "120px",
+    width: "140px",
+    height: "140px",
     borderRadius: "50%",
     objectFit: "cover",
-    border: "1px solid #d1d5db",
+    border: "3px solid #transparent",
+    background: "linear-gradient(#fff, #fff) padding-box, linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888) border-box",
   },
   profileImagePlaceholder: {
-    width: "120px",
-    height: "120px",
+    width: "140px",
+    height: "140px",
     borderRadius: "50%",
-    background: "#dbeafe",
+    background: "linear-gradient(135deg, #dbeafe, #bfdbfe)",
     color: "#1d4ed8",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "36px",
+    fontSize: "48px",
     fontWeight: "700",
   },
   imageUploadBtn: {
     border: "1px solid #bfdbfe",
     background: "#eff6ff",
     color: "#1d4ed8",
-    padding: "10px 14px",
+    padding: "8px 12px",
     borderRadius: "12px",
     cursor: "pointer",
     fontWeight: "600",
+    fontSize: "13px",
+  },
+  profileInfoText: {
+    display: "flex",
+    flexDirection: "column",
+    marginBottom: "20px"
   },
   userName: {
-    fontSize: "28px",
+    fontSize: "26px",
     fontWeight: "700",
     color: "#1f2937",
     wordBreak: "break-word",
-  },
-  userEmail: {
-    color: "#6b7280",
-    marginTop: "6px",
-    fontSize: "15px",
-    wordBreak: "break-word",
+    marginBottom: "4px"
   },
   bioText: {
-    marginTop: "12px",
-    fontSize: "14px",
+    fontSize: "15px",
     color: "#374151",
     lineHeight: "1.5",
     whiteSpace: "pre-wrap",
     wordBreak: "break-word",
+    maxWidth: "400px"
   },
   editInput: {
     width: "100%",
+    maxWidth: "300px",
     border: "1px solid #d1d5db",
     borderRadius: "12px",
     padding: "12px 14px",
     fontSize: "16px",
     outline: "none",
+    marginBottom: "12px",
   },
   editTextarea: {
     width: "100%",
+    maxWidth: "300px",
     minHeight: "90px",
-    marginTop: "12px",
     border: "1px solid #d1d5db",
     borderRadius: "12px",
     padding: "12px 14px",
     fontSize: "14px",
     outline: "none",
     resize: "vertical",
+    marginBottom: "20px"
   },
   stats: {
     display: "flex",
-    flexWrap: "wrap",
-    gap: "14px",
-    marginTop: "16px",
+    gap: "36px",
+    marginBottom: "24px",
+    flexWrap: "wrap"
   },
   statBox: {
-    minWidth: "110px",
-    background: "#f8fafc",
-    border: "1px solid #e5e7eb",
-    borderRadius: "18px",
-    padding: "14px 18px",
-    flex: "1 1 110px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
   },
   statNumber: {
-    fontSize: "28px",
-    fontWeight: "700",
+    fontSize: "22px",
+    fontWeight: "800",
     color: "#1f2937",
   },
   statLabel: {
     fontSize: "14px",
     color: "#6b7280",
+    fontWeight: "500",
   },
   actions: {
     display: "flex",
-    gap: "10px",
-    marginTop: "18px",
+    gap: "12px",
     flexWrap: "wrap",
   },
   followBtn: {
     border: "none",
     background: "#2563eb",
     color: "#ffffff",
-    padding: "12px 16px",
-    borderRadius: "14px",
+    padding: "10px 24px",
+    borderRadius: "12px",
     cursor: "pointer",
     fontWeight: "700",
+    fontSize: "15px",
   },
   messageBtn: {
-    border: "1px solid #bfdbfe",
-    background: "#eff6ff",
-    color: "#1d4ed8",
-    padding: "12px 16px",
-    borderRadius: "14px",
+    border: "1px solid #e5e7eb",
+    background: "#ffffff",
+    color: "#1f2937",
+    padding: "10px 24px",
+    borderRadius: "12px",
     cursor: "pointer",
     fontWeight: "700",
+    fontSize: "15px",
   },
   postsGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: "16px",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: "4px",
   },
   postCard: {
-    background: "#ffffff",
-    border: "1px solid #e5e7eb",
-    borderRadius: "18px",
+    background: "#f9fafb",
+    position: "relative",
+    aspectRatio: "1 / 1",
     overflow: "hidden",
-    minHeight: "220px",
+    cursor: "pointer",
   },
   postImage: {
     width: "100%",
     height: "100%",
-    maxHeight: "320px",
     objectFit: "cover",
   },
   postContent: {
     padding: "16px",
     color: "#374151",
-    lineHeight: "1.5",
+    lineHeight: "1.4",
+    fontSize: "14px",
+    overflow: "hidden",
+    display: "-webkit-box",
+    WebkitLineClamp: 4,
+    WebkitBoxOrient: "vertical",
   },
 };
 
