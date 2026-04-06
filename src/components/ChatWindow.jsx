@@ -11,7 +11,7 @@ import {
 import { getMyProfile } from "../services/userService";
 import { API_BASE_URL } from "../config";
 
-const ChatWindow = ({ selectedUser, onMessageSent }) => {
+const ChatWindow = ({ selectedUser, onMessageSent, isMobile, onBackClick }) => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [messageText, setMessageText] = useState("");
@@ -293,6 +293,20 @@ const ChatWindow = ({ selectedUser, onMessageSent }) => {
       <div className="chat-window-shell">
         <div className="chat-window-header">
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            {isMobile && (
+              <button 
+                onClick={onBackClick}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: "22px",
+                  cursor: "pointer",
+                  color: "#374151"
+                }}
+              >
+                ←
+              </button>
+            )}
             {selectedUser.profileImageUrl ? (
               <img
                 src={selectedUser.profileImageUrl}

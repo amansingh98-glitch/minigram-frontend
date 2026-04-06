@@ -7,6 +7,14 @@ const ChatPage = ({ initialSelectedUser = null }) => {
   const [conversations, setConversations] = useState([]);
   const [selectedUser, setSelectedUser] = useState(initialSelectedUser);
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const loadConversations = async () => {
     try {
       const data = await getConversations();
@@ -15,7 +23,7 @@ const ChatPage = ({ initialSelectedUser = null }) => {
 
       if (initialSelectedUser) {
         setSelectedUser(initialSelectedUser);
-      } else if (!selectedUser && safeData.length > 0) {
+      } else if (!isMobile && !selectedUser && safeData.length > 0) {
         setSelectedUser(safeData[0]);
       }
     } catch (error) {
@@ -35,17 +43,23 @@ const ChatPage = ({ initialSelectedUser = null }) => {
   }, [initialSelectedUser]);
 
   return (
-    <div className="chat-layout">
-      <ChatList
-        conversations={conversations}
-        selectedUser={selectedUser}
-        onSelectUser={setSelectedUser}
-      />
+    <div className="chat-layout" style={{ display: isMobile ? "block" : "grid" }}>
+      {(!isMobile || !selectedUser) && (
+        <ChatList
+          conversations={conversations}
+          selectedUser={selectedUser}
+          onSelectUser={setSelectedUser}
+        />
+      )}
 
-      <ChatWindow
-        selectedUser={selectedUser}
-        onMessageSent={loadConversations}
-      />
+      {(!isMobile || selectedUser) && (
+        <ChatWindow
+          selectedUser={selectedUser}
+          onMessageSent={loadConversations}
+          isMobile={isMobile}
+          onBackClick={() => setSelectedUser(null)}
+        />
+      )}
     </div>
   );
 };

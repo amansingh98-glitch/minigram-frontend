@@ -16,6 +16,7 @@ import {
   getUnreadNotificationCount,
   markNotificationsAsRead,
 } from "../services/notificationService";
+import { setOnline, setOffline } from "../services/chatService";
 import { resolveMediaUrl } from "../utils/media";
 
 const HomePage = ({ onLogout }) => {
@@ -146,6 +147,20 @@ const HomePage = ({ onLogout }) => {
     loadPosts();
     loadMyProfile();
     loadUnreadCount();
+
+    // Notify backend user is online
+    setOnline().catch(console.error);
+
+    const handleBeforeUnload = () => {
+      setOffline().catch(console.error);
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      setOffline().catch(console.error);
+    };
   }, []);
 
   const handleCreatePost = async () => {
