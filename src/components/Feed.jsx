@@ -19,8 +19,19 @@ const Feed = ({
   const [likeLoading, setLikeLoading] = useState({});
   const [deletePostLoading, setDeletePostLoading] = useState({});
   const [deleteCommentLoading, setDeleteCommentLoading] = useState({});
+  const [activeDropdownPostId, setActiveDropdownPostId] = useState(null);
   const [localPosts, setLocalPosts] = useState(posts);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(".three-dot-menu-container")) {
+        setActiveDropdownPostId(null);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     setLocalPosts(posts);
@@ -172,10 +183,13 @@ const Feed = ({
               </div>
 
               <div
+                className="three-dot-menu-container"
                 style={{
                   ...styles.topActionWrap,
                   width: isMobile ? "100%" : "auto",
                   justifyContent: isMobile ? "flex-start" : "flex-end",
+                  position: "relative",
+                  alignItems: "center"
                 }}
               >
                 <button
@@ -197,16 +211,33 @@ const Feed = ({
                 </button>
 
                 {post.currentUserPost && (
-                  <button
-                    style={{
-                      ...styles.deleteButton,
-                      width: isMobile ? "100%" : "auto",
-                    }}
-                    onClick={() => handleDeletePost(post.id)}
-                    disabled={deletePostLoading[post.id]}
-                  >
-                    {deletePostLoading[post.id] ? "Deleting..." : "Delete Post"}
-                  </button>
+                  <div style={{ position: "relative" }}>
+                    <button
+                      style={styles.threeDotBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveDropdownPostId(
+                          activeDropdownPostId === post.id ? null : post.id
+                        );
+                      }}
+                    >
+                      ⋮
+                    </button>
+                    {activeDropdownPostId === post.id && (
+                      <div style={styles.dropdownMenu}>
+                        <button
+                          style={styles.dropdownDeleteBtn}
+                          onClick={() => {
+                            setActiveDropdownPostId(null);
+                            handleDeletePost(post.id);
+                          }}
+                          disabled={deletePostLoading[post.id]}
+                        >
+                          {deletePostLoading[post.id] ? "Deleting..." : "Delete Post"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -375,20 +406,46 @@ const styles = {
     border: "none",
     background: "#eff6ff",
     color: "#1d4ed8",
-    padding: "10px 12px",
+    padding: "8px 12px",
     borderRadius: "12px",
     cursor: "pointer",
     fontWeight: "600",
   },
 
-  deleteButton: {
+  threeDotBtn: {
+    background: "none",
+    border: "none",
+    fontSize: "20px",
+    fontWeight: "800",
+    color: "#6b7280",
+    cursor: "pointer",
+    padding: "4px 8px",
+    lineHeight: 1,
+  },
+
+  dropdownMenu: {
+    position: "absolute",
+    top: "30px",
+    right: "0",
+    background: "#ffffff",
+    border: "1px solid #e5e7eb",
+    borderRadius: "12px",
+    boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+    padding: "6px",
+    zIndex: 10,
+    minWidth: "130px",
+  },
+
+  dropdownDeleteBtn: {
+    width: "100%",
     border: "none",
     background: "#fef2f2",
     color: "#dc2626",
     padding: "10px 12px",
-    borderRadius: "12px",
+    borderRadius: "8px",
     cursor: "pointer",
     fontWeight: "600",
+    textAlign: "left",
   },
 
   postContent: {

@@ -7,6 +7,7 @@ import {
 } from "../services/userService";
 import { toggleFollow as toggleFollowApi } from "../services/followService";
 import { resolveMediaUrl } from "../utils/media";
+import SinglePostModal from "../components/SinglePostModal";
 
 const ProfilePage = ({ userId, onMessageUser }) => {
   const [profile, setProfile] = useState(null);
@@ -18,6 +19,7 @@ const ProfilePage = ({ userId, onMessageUser }) => {
   const [editBio, setEditBio] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [activePost, setActivePost] = useState(null);
 
   const fileRef = useRef(null);
 
@@ -273,7 +275,11 @@ const ProfilePage = ({ userId, onMessageUser }) => {
       {profile.posts?.length > 0 && (
         <div style={styles.postsGrid}>
           {profile.posts.map((post) => (
-            <div key={post.id} style={styles.postCard}>
+            <div
+              key={post.id}
+              style={styles.postCard}
+              onClick={() => setActivePost(post)}
+            >
               {post.imageUrl ? (
                 <img src={post.imageUrl} alt="post" style={styles.postImage} />
               ) : (
@@ -283,6 +289,17 @@ const ProfilePage = ({ userId, onMessageUser }) => {
           ))}
         </div>
       )}
+
+      {/* Single Post Pop-up Modal */}
+      <SinglePostModal
+        post={activePost}
+        isOpen={!!activePost}
+        onClose={() => {
+          setActivePost(null);
+          loadProfile();
+        }}
+        onUpdate={loadProfile}
+      />
     </div>
   );
 };
