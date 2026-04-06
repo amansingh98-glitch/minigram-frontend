@@ -9,6 +9,7 @@ import { toggleFollow as toggleFollowApi } from "../services/followService";
 import { resolveMediaUrl } from "../utils/media";
 import { deletePost } from "../services/postService";
 import SinglePostModal from "../components/SinglePostModal";
+import "../styles/ProfilePage.css";
 
 const ProfilePage = ({ userId, onMessageUser }) => {
   const [profile, setProfile] = useState(null);
@@ -25,11 +26,13 @@ const ProfilePage = ({ userId, onMessageUser }) => {
   const [activeDropdownPostId, setActiveDropdownPostId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState({});
 
+  const [activeTab, setActiveTab] = useState("grid");
+
   const fileRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (!e.target.closest(".grid-dropdown-container")) {
+      if (!e.target.closest(".profile-abs-menu")) {
         setActiveDropdownPostId(null);
       }
     };
@@ -151,208 +154,191 @@ const ProfilePage = ({ userId, onMessageUser }) => {
   };
 
   if (loading) {
-    return <div style={styles.infoCard}>Loading profile...</div>;
+    return <div className="profile-container" style={{ padding: "20px", textAlign: "center" }}>Loading...</div>;
   }
 
   if (!profile) {
-    return <div style={styles.infoCard}>Profile not found</div>;
+    return <div className="profile-container" style={{ padding: "20px", textAlign: "center" }}>User not found</div>;
   }
 
   return (
-    <div style={styles.wrapper}>
-      <div style={styles.headerCard}>
-        <div style={styles.top}>
-          <div style={styles.imageSection}>
-            {profile.profileImageUrl ? (
-              <img
-                src={profile.profileImageUrl}
-                alt={profile.username}
-                style={styles.profileImage}
-              />
-            ) : (
-              <div style={styles.profileImagePlaceholder}>
-                {profile.username?.charAt(0)?.toUpperCase() || "U"}
-              </div>
-            )}
+    <div className="profile-container">
+      {/* Mobile Top Bar */}
+      <div className="profile-mobile-topbar">
+        <div style={{ width: "24px" }}></div> {/* Placeholder for back button if needed */}
+        <div className="profile-mobile-username">
+          {profile.username}
+          <span style={{ fontSize: "12px" }}>▼</span>
+        </div>
+        <div className="profile-mobile-menu">☰</div>
+      </div>
 
-            {profile.currentUserProfile && (
-              <>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  onChange={handleProfileImageChange}
-                />
-                <button
-                  style={styles.imageUploadBtn}
-                  onClick={() => fileRef.current?.click()}
-                  disabled={uploadingImage}
-                >
-                  {uploadingImage ? "Uploading..." : "Change Photo"}
-                </button>
-              </>
-            )}
-          </div>
-
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {editMode ? (
-              <>
-                <input
-                  value={editUsername}
-                  onChange={(e) => setEditUsername(e.target.value)}
-                  placeholder="Enter username"
-                  style={styles.editInput}
-                />
-
-                <textarea
-                  value={editBio}
-                  onChange={(e) => setEditBio(e.target.value)}
-                  placeholder="Write your bio"
-                  style={styles.editTextarea}
-                />
-              </>
-            ) : (
-              <div style={styles.profileInfoText}>
-                <div style={styles.userName}>{profile.username}</div>
-                <div style={styles.bioText}>
-                  {profile.bio?.trim() ? profile.bio : "No bio yet"}
+      <div className="profile-main-header">
+        <div className="profile-top-section">
+          <div className="profile-avatar-wrapper" onClick={() => profile.currentUserProfile && fileRef.current?.click()}>
+            <div className={`profile-avatar-ring ${!profile.hasUnseenStories ? 'no-story' : ''}`}>
+              {profile.profileImageUrl ? (
+                <img src={profile.profileImageUrl} alt="avatar" className="profile-avatar" />
+              ) : (
+                <div className="profile-avatar-placeholder">
+                  {profile.username?.charAt(0)?.toUpperCase()}
                 </div>
-              </div>
-            )}
-
-            <div style={styles.stats}>
-              <div style={styles.statBox}>
-                <div style={styles.statNumber}>{profile.postsCount || 0}</div>
-                <div style={styles.statLabel}>Posts</div>
-              </div>
-
-              <div style={styles.statBox}>
-                <div style={styles.statNumber}>{profile.followersCount || 0}</div>
-                <div style={styles.statLabel}>Followers</div>
-              </div>
-
-              <div style={styles.statBox}>
-                <div style={styles.statNumber}>{profile.followingCount || 0}</div>
-                <div style={styles.statLabel}>Following</div>
-              </div>
+              )}
             </div>
-
-            {profile.currentUserProfile ? (
-              <div style={styles.actions}>
-                {editMode ? (
-                  <>
-                    <button
-                      style={styles.followBtn}
-                      onClick={handleSaveProfile}
-                      disabled={saving}
-                    >
-                      {saving ? "Saving..." : "Save Profile"}
-                    </button>
-
-                    <button
-                      style={styles.messageBtn}
-                      onClick={() => {
-                        setEditMode(false);
-                        setEditUsername(profile.username || "");
-                        setEditBio(profile.bio || "");
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    style={styles.followBtn}
-                    onClick={() => setEditMode(true)}
-                  >
-                    Edit Profile
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div style={styles.actions}>
-                <button
-                  style={styles.followBtn}
-                  onClick={handleFollowToggle}
-                  disabled={followLoading}
-                >
-                  {followLoading
-                    ? "..."
-                    : profile.followedByCurrentUser
-                    ? "Following"
-                    : "Follow"}
-                </button>
-
-                <button
-                  style={styles.messageBtn}
-                  onClick={() =>
-                    onMessageUser &&
-                    onMessageUser({
-                      userId: profile.id,
-                      username: profile.username,
-                      email: profile.email,
-                      profileImageUrl: profile.profileImageUrl,
-                    })
-                  }
-                >
-                  Message
-                </button>
-              </div>
+            {profile.currentUserProfile && (
+              <div className="profile-upload-btn">+</div>
             )}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={handleProfileImageChange}
+            />
           </div>
+
+          <div className="profile-stats">
+            <div className="profile-stat-box">
+              <span className="profile-stat-number">{profile.postsCount || 0}</span>
+              <span className="profile-stat-label">posts</span>
+            </div>
+            <div className="profile-stat-box">
+              <span className="profile-stat-number">{profile.followersCount || 0}</span>
+              <span className="profile-stat-label">followers</span>
+            </div>
+            <div className="profile-stat-box">
+              <span className="profile-stat-number">{profile.followingCount || 0}</span>
+              <span className="profile-stat-label">following</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="profile-bio-section">
+          <div className="profile-real-name">{profile.username}</div>
+          {editMode ? (
+            <>
+              <input
+                className="profile-edit-input"
+                name="username"
+                value={editUsername}
+                onChange={(e) => setEditUsername(e.target.value)}
+                placeholder="Username"
+              />
+              <textarea
+                className="profile-edit-textarea"
+                name="bio"
+                value={editBio}
+                onChange={(e) => setEditBio(e.target.value)}
+                placeholder="Bio"
+              />
+            </>
+          ) : (
+            <div className="profile-bio-text">{profile.bio}</div>
+          )}
+        </div>
+
+        <div className="profile-actions">
+          {profile.currentUserProfile ? (
+            editMode ? (
+              <>
+                <button className="profile-action-btn primary" onClick={handleSaveProfile} disabled={saving}>
+                  {saving ? "Saving..." : "Save"}
+                </button>
+                <button className="profile-action-btn" onClick={() => setEditMode(false)}>
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <>
+                <button className="profile-action-btn" onClick={() => setEditMode(true)}>
+                  Edit profile
+                </button>
+                <button className="profile-action-btn" onClick={() => {
+                  const url = window.location.href;
+                  navigator.clipboard.writeText(url);
+                  alert("Profile link copied!");
+                }}>
+                  Share profile
+                </button>
+              </>
+            )
+          ) : (
+            <>
+              <button 
+                className={`profile-action-btn ${!profile.followedByCurrentUser ? 'primary' : ''}`}
+                onClick={handleFollowToggle}
+                disabled={followLoading}
+              >
+                {followLoading ? "..." : (profile.followedByCurrentUser ? "Following" : "Follow")}
+              </button>
+              <button 
+                className="profile-action-btn"
+                onClick={() => onMessageUser && onMessageUser({
+                  userId: profile.id,
+                  username: profile.username,
+                  email: profile.email,
+                  profileImageUrl: profile.profileImageUrl,
+                })}
+              >
+                Message
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      {profile.posts?.length > 0 && (
-        <div style={styles.postsGrid}>
+      <div className="profile-tabs">
+        <div className={`profile-tab ${activeTab === 'grid' ? 'active' : ''}`} onClick={() => setActiveTab('grid')}>
+          <span className="profile-tab-icon">▦</span>
+        </div>
+        <div className={`profile-tab ${activeTab === 'reels' ? 'active' : ''}`} onClick={() => setActiveTab('reels')}>
+          <span className="profile-tab-icon">▶</span>
+        </div>
+        <div className={`profile-tab ${activeTab === 'tagged' ? 'active' : ''}`} onClick={() => setActiveTab('tagged')}>
+          <span className="profile-tab-icon">웃</span>
+        </div>
+      </div>
+
+      {activeTab === 'grid' && profile.posts?.length > 0 && (
+        <div className="profile-posts-grid">
           {profile.posts.map((post) => (
-            <div
-              key={post.id}
-              style={styles.postCard}
+            <div 
+              key={post.id} 
+              className="profile-post-card"
               onClick={() => setActivePost(post)}
               onMouseEnter={() => setHoveredPostId(post.id)}
               onMouseLeave={() => setHoveredPostId(null)}
             >
               {post.imageUrl ? (
-                <img src={post.imageUrl} alt="post" style={styles.postImage} />
+                <img src={post.imageUrl} alt="post" className="profile-post-image" />
               ) : (
-                <div style={styles.postContent}>{post.content}</div>
+                <div className="profile-post-text">{post.content?.substring(0, 50)}...</div>
               )}
 
-              {/* Hover Overlay for Likes/Comments */}
+              {/* Hover overlay on desktop */}
               {hoveredPostId === post.id && (
-                <div style={styles.hoverOverlay}>
-                  <div style={styles.hoverStat}>
-                    ❤️ {post.likeCount || 0}
-                  </div>
-                  <div style={styles.hoverStat}>
-                    💬 {post.comments?.length || 0}
-                  </div>
+                <div className="profile-post-overlay">
+                  <div className="profile-post-overlay-stat">❤️ {post.likeCount || 0}</div>
+                  <div className="profile-post-overlay-stat">💬 {post.comments?.length || 0}</div>
                 </div>
               )}
 
-              {/* 3-Dot Menu for direct delete */}
-              {profile.currentUserProfile && (
+               {/* Delete Menu */}
+               {profile.currentUserProfile && (
                 <div
-                  className="grid-dropdown-container"
-                  style={styles.absMenuContainer}
-                  onClick={(e) => e.stopPropagation()} /* Prevent opening single post modal */
+                  className="profile-abs-menu"
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <button
-                    style={styles.threeDotBtn}
-                    onClick={() =>
-                      setActiveDropdownPostId(
-                        activeDropdownPostId === post.id ? null : post.id
-                      )
-                    }
+                    className="profile-three-dot-btn"
+                    onClick={() => setActiveDropdownPostId(activeDropdownPostId === post.id ? null : post.id)}
                   >
                     ⋮
                   </button>
                   {activeDropdownPostId === post.id && (
-                    <div style={styles.dropdownMenu}>
+                    <div className="profile-dropdown-menu">
                       <button
-                        style={styles.dropdownDeleteBtn}
+                        className="profile-dropdown-btn"
                         onClick={() => handleDeletePost(post.id)}
                         disabled={deleteLoading[post.id]}
                       >
@@ -367,7 +353,18 @@ const ProfilePage = ({ userId, onMessageUser }) => {
         </div>
       )}
 
-      {/* Single Post Pop-up Modal */}
+      {activeTab === 'reels' && (
+        <div style={{ textAlign: "center", padding: "40px", color: "#8e8e8e" }}>
+          No reels yet.
+        </div>
+      )}
+
+      {activeTab === 'tagged' && (
+        <div style={{ textAlign: "center", padding: "40px", color: "#8e8e8e" }}>
+          No tagged photos.
+        </div>
+      )}
+
       <SinglePostModal
         post={activePost}
         isOpen={!!activePost}
@@ -379,256 +376,6 @@ const ProfilePage = ({ userId, onMessageUser }) => {
       />
     </div>
   );
-};
-
-const styles = {
-  wrapper: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "18px",
-    width: "100%",
-    overflowX: "hidden",
-  },
-  infoCard: {
-    background: "#ffffff",
-    border: "1px solid #e5e7eb",
-    borderRadius: "24px",
-    padding: "20px",
-    color: "#6b7280",
-    textAlign: "center",
-  },
-  headerCard: {
-    background: "#ffffff",
-    border: "1px solid #e5e7eb",
-    borderRadius: "24px",
-    padding: "24px",
-    overflow: "hidden",
-  },
-  top: {
-    display: "flex",
-    gap: "32px",
-    alignItems: "flex-start",
-    flexWrap: "wrap",
-    width: "100%",
-  },
-  imageSection: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "16px",
-    flexShrink: 0,
-  },
-  profileImage: {
-    width: "140px",
-    height: "140px",
-    borderRadius: "50%",
-    objectFit: "cover",
-    border: "3px solid #transparent",
-    background: "linear-gradient(#fff, #fff) padding-box, linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888) border-box",
-  },
-  profileImagePlaceholder: {
-    width: "140px",
-    height: "140px",
-    borderRadius: "50%",
-    background: "linear-gradient(135deg, #dbeafe, #bfdbfe)",
-    color: "#1d4ed8",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "48px",
-    fontWeight: "700",
-  },
-  imageUploadBtn: {
-    border: "1px solid #bfdbfe",
-    background: "#eff6ff",
-    color: "#1d4ed8",
-    padding: "8px 12px",
-    borderRadius: "12px",
-    cursor: "pointer",
-    fontWeight: "600",
-    fontSize: "13px",
-  },
-  profileInfoText: {
-    display: "flex",
-    flexDirection: "column",
-    marginBottom: "20px"
-  },
-  userName: {
-    fontSize: "26px",
-    fontWeight: "700",
-    color: "#1f2937",
-    wordBreak: "break-word",
-    marginBottom: "4px"
-  },
-  bioText: {
-    fontSize: "15px",
-    color: "#374151",
-    lineHeight: "1.5",
-    whiteSpace: "pre-wrap",
-    wordBreak: "break-word",
-    maxWidth: "400px"
-  },
-  editInput: {
-    width: "100%",
-    maxWidth: "300px",
-    border: "1px solid #d1d5db",
-    borderRadius: "12px",
-    padding: "12px 14px",
-    fontSize: "16px",
-    outline: "none",
-    marginBottom: "12px",
-  },
-  editTextarea: {
-    width: "100%",
-    maxWidth: "300px",
-    minHeight: "90px",
-    border: "1px solid #d1d5db",
-    borderRadius: "12px",
-    padding: "12px 14px",
-    fontSize: "14px",
-    outline: "none",
-    resize: "vertical",
-    marginBottom: "20px"
-  },
-  stats: {
-    display: "flex",
-    gap: "36px",
-    marginBottom: "24px",
-    flexWrap: "wrap"
-  },
-  statBox: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-  },
-  statNumber: {
-    fontSize: "22px",
-    fontWeight: "800",
-    color: "#1f2937",
-  },
-  statLabel: {
-    fontSize: "14px",
-    color: "#6b7280",
-    fontWeight: "500",
-  },
-  actions: {
-    display: "flex",
-    gap: "12px",
-    flexWrap: "wrap",
-  },
-  followBtn: {
-    border: "none",
-    background: "#2563eb",
-    color: "#ffffff",
-    padding: "10px 24px",
-    borderRadius: "12px",
-    cursor: "pointer",
-    fontWeight: "700",
-    fontSize: "15px",
-  },
-  messageBtn: {
-    border: "1px solid #e5e7eb",
-    background: "#ffffff",
-    color: "#1f2937",
-    padding: "10px 24px",
-    borderRadius: "12px",
-    cursor: "pointer",
-    fontWeight: "700",
-    fontSize: "15px",
-  },
-  postsGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(3, 1fr)",
-    gap: "4px",
-  },
-  postCard: {
-    background: "#f9fafb",
-    position: "relative",
-    aspectRatio: "1 / 1",
-    overflow: "hidden",
-    cursor: "pointer",
-  },
-  postImage: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-  },
-  postContent: {
-    padding: "16px",
-    color: "#374151",
-    lineHeight: "1.4",
-    fontSize: "14px",
-    overflow: "hidden",
-    display: "-webkit-box",
-    WebkitLineClamp: 4,
-    WebkitBoxOrient: "vertical",
-  },
-  hoverOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "24px",
-    color: "#ffffff",
-    fontWeight: "700",
-    fontSize: "18px",
-    pointerEvents: "none", /* Allow clicks to pass through to open modal */
-  },
-  hoverStat: {
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-  },
-  absMenuContainer: {
-    position: "absolute",
-    top: "8px",
-    right: "8px",
-    zIndex: 10,
-  },
-  threeDotBtn: {
-    background: "rgba(255, 255, 255, 0.8)",
-    border: "None",
-    borderRadius: "50%",
-    width: "32px",
-    height: "32px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "20px",
-    fontWeight: "800",
-    color: "#1f2937",
-    cursor: "pointer",
-    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-    lineHeight: 1,
-  },
-  dropdownMenu: {
-    position: "absolute",
-    top: "38px",
-    right: "0",
-    background: "#ffffff",
-    border: "1px solid #e5e7eb",
-    borderRadius: "12px",
-    boxShadow: "0 4px 10px rgba(0,0,0,0.15)",
-    padding: "6px",
-    zIndex: 20,
-    minWidth: "120px",
-  },
-  dropdownDeleteBtn: {
-    width: "100%",
-    border: "none",
-    background: "#fef2f2",
-    color: "#dc2626",
-    padding: "10px 12px",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontWeight: "600",
-    textAlign: "left",
-  },
 };
 
 export default ProfilePage;

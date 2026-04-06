@@ -346,6 +346,7 @@ const HomePage = ({ onLogout }) => {
 
   return (
     <div style={styles.page}>
+      <style>{globalStyles}</style>
       {!isMobile && (
         <Sidebar
           onLogout={onLogout}
@@ -469,26 +470,37 @@ const HomePage = ({ onLogout }) => {
           onClick={() => handleOpenChat({ userId: toastMessage.senderId, username: toastMessage.senderName })}
           style={{
             position: "fixed",
-            bottom: isMobile ? "80px" : "30px",
-            right: "20px",
-            background: "#2563eb",
-            color: "white",
-            padding: "12px 18px",
-            borderRadius: "12px",
-            boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+            top: "20px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "#262626", // Instagram dark pill background
+            color: "#fafafa",
+            padding: "10px 16px",
+            borderRadius: "30px", // Pill shape
+            boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
             cursor: "pointer",
             zIndex: 9999,
             display: "flex",
-            flexDirection: "column",
-            gap: "4px",
-            maxWidth: "300px",
-            animation: "slideIn 0.3s ease-out forwards",
+            alignItems: "center",
+            gap: "12px",
+            minWidth: "280px",
+            maxWidth: "90%",
+            animation: "slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards",
           }}
         >
-          <strong style={{ fontSize: "14px" }}>New message from {toastMessage.senderName}</strong>
-          <span style={{ fontSize: "13px", opacity: 0.9, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {toastMessage.text}
-          </span>
+          <div style={{
+            width: "38px", height: "38px", borderRadius: "50%", background: "linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)", display: "flex", alignItems: "center", justifyContent: "center"
+          }}>
+             <div style={{ width: "34px", height: "34px", borderRadius: "50%", background: "#262626", color: "#fafafa", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: "bold" }}>
+                {toastMessage.senderName.charAt(0).toUpperCase()}
+             </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
+             <strong style={{ fontSize: "14px", fontWeight: "600", color: "#fafafa" }}>{toastMessage.senderName}</strong>
+             <span style={{ fontSize: "13px", color: "#a8a8a8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+               {toastMessage.text}
+             </span>
+          </div>
         </div>
       )}
     </div>
@@ -709,9 +721,9 @@ const globalStyles = `
 ::-webkit-scrollbar {
   display: none;
 }
-@keyframes slideIn {
-  from { transform: translateY(100px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+@keyframes slideDown {
+  from { transform: translate(-50%, -100px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
 }
 `;
 export default HomePage;
