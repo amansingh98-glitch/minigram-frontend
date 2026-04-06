@@ -9,6 +9,7 @@ import ProfilePage from "./ProfilePage";
 import ChatPage from "./ChatPage";
 import SearchPage from "./SearchPage";
 import SettingsPage from "./SettingsPage";
+import ReelsPage from "./ReelsPage";
 import { createPost, getAllPosts } from "../services/postService";
 import { getMyProfile } from "../services/userService";
 import {
@@ -279,6 +280,10 @@ const HomePage = ({ onLogout }) => {
 
     if (activePage === "settings") {
       return <SettingsPage onLogout={onLogout} />;
+    }
+
+    if (activePage === "reels") {
+      return <ReelsPage posts={posts} onUpdate={loadPosts} />;
     }
 
     return (
@@ -645,4 +650,9 @@ const styles = {
   },
 };
 
+const globalStyles = `
+::-webkit-scrollbar {
+  display: none;
+}
+`;
 export default HomePage;

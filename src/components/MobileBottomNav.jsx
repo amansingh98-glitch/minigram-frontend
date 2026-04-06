@@ -19,6 +19,11 @@ const MobileBottomNav = ({ activePage, onNavigate }) => {
         <div style={styles.label}>Search</div>
       </div>
 
+      <div style={itemStyle("reels")} onClick={() => onNavigate("reels")}>
+        <div style={styles.icon}>🎬</div>
+        <div style={styles.label}>Reels</div>
+      </div>
+
       <div style={itemStyle("messages")} onClick={() => onNavigate("messages")}>
         <div style={styles.icon}>💬</div>
         <div style={styles.label}>Chat</div>
