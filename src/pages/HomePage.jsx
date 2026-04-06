@@ -525,9 +525,11 @@ const styles = {
 
   pageBody: (isMobile) => ({
     paddingTop: isMobile ? "84px" : "105px",
-    paddingLeft: isMobile ? "10px" : "24px",
-    paddingRight: isMobile ? "10px" : "24px",
+    paddingLeft: isMobile ? "0px" : "24px",
+    paddingRight: isMobile ? "0px" : "24px",
     paddingBottom: isMobile ? "10px" : "24px",
+    overflowX: "hidden",
+    width: "100%",
   }),
 
   brandSection: {
@@ -688,12 +690,14 @@ const styles = {
     display: "flex",
     flexDirection: isMobile ? "column" : "row",
     gap: "24px",
-    alignItems: "flex-start",
+    alignItems: isMobile ? "stretch" : "flex-start",
+    width: "100%",
   }),
 
   leftContent: {
     flex: 1,
     minWidth: 0,
+    width: "100%",
   },
 
   rightContent: {

@@ -55,7 +55,7 @@ export const getMessages = async (otherUserId) => {
   return raw ? JSON.parse(raw) : [];
 };
 
-export const sendMessage = async (receiverId, messageText) => {
+export const sendMessage = async (receiverId, messageText, replyToMessageId = null) => {
   const token = localStorage.getItem("token");
 
   const response = await fetch(`${API_BASE_URL}/chat/send/${receiverId}`, {
@@ -64,7 +64,7 @@ export const sendMessage = async (receiverId, messageText) => {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ messageText }),
+    body: JSON.stringify({ messageText, replyToMessageId }),
   });
 
   const raw = await response.text();
@@ -139,6 +139,25 @@ export const setOffline = async () => {
       Authorization: `Bearer ${token}`,
     },
   });
+};
+
+export const reactToMessage = async (messageId, reaction) => {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${API_BASE_URL}/chat/messages/${messageId}/react?reaction=${encodeURIComponent(reaction)}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const raw = await response.text();
+
+  if (!response.ok) {
+    throw new Error(raw || "Failed to send reaction");
+  }
+
+  return raw ? JSON.parse(raw) : {};
 };
 
 export const deleteMessageForMe = async (messageId) => {

@@ -39,6 +39,8 @@ a {
   gap: 12px;
   overflow-x: auto;
   padding: 10px 2px 4px 2px;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .story-chip {
@@ -84,7 +86,7 @@ a {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
   width: 100%;
   min-width: 0;
-  max-width: 100vw;
+  max-width: 100%;
   overflow: hidden;
 }
 
