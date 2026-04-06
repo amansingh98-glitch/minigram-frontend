@@ -220,6 +220,25 @@ const HomePage = ({ onLogout }) => {
     }
   };
 
+  const handleNotificationItemClick = (item) => {
+    setShowNotifications(false);
+    if (!item.referenceId) return;
+
+    handleNavigate("home");
+
+    setTimeout(() => {
+      const el = document.getElementById(`post-${item.referenceId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.style.transition = "background-color 0.5s ease";
+        el.style.backgroundColor = "#fef3c7";
+        setTimeout(() => {
+          el.style.backgroundColor = "";
+        }, 1500);
+      }
+    }, 300);
+  };
+
   const renderPage = () => {
     if (activePage === "messages") {
       return <ChatPage initialSelectedUser={selectedChatUser} />;
@@ -354,9 +373,13 @@ const HomePage = ({ onLogout }) => {
                     </div>
                   ) : (
                     notifications.map((item, index) => (
-                      <div key={item.id || index} style={styles.notificationItem}>
+                      <div
+                        key={item.id || index}
+                        style={{ ...styles.notificationItem, cursor: item.referenceId ? "pointer" : "default" }}
+                        onClick={() => handleNotificationItemClick(item)}
+                      >
                         <div style={styles.notificationMessage}>
-                         {item.messageText || item.message || "Notification"}
+                          {item.messageText || item.message || "Notification"}
                         </div>
                         {item.createdAt && (
                           <div style={styles.notificationTime}>

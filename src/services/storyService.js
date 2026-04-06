@@ -41,3 +41,40 @@ export const getStories = async () => {
 
   return raw ? JSON.parse(raw) : [];
 };
+
+export const likeStory = async (storyId) => {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE_URL}/stories/${storyId}/like`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to like story");
+};
+
+export const unlikeStory = async (storyId) => {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE_URL}/stories/${storyId}/like`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to unlike story");
+};
+
+export const viewStory = async (storyId) => {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE_URL}/stories/${storyId}/view`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to mark story as viewed");
+};
+
+export const getStoryInsights = async (storyId) => {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE_URL}/stories/${storyId}/insights`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to get insights");
+  return res.json();
+};

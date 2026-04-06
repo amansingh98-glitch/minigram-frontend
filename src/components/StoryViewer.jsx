@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { likeStory, unlikeStory, viewStory, getStoryInsights } from "../services/storyService";
 
 const StoryViewer = ({
   stories = [],
@@ -9,6 +10,17 @@ const StoryViewer = ({
 }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [showViewers, setShowViewers] = useState(false);
+  const [storyInsights, setStoryInsights] = useState({ viewCount: 0, likeCount: 0, viewers: [], likers: [] });
+  const [localHasLiked, setLocalHasLiked] = useState(false);
+  const [localLikeCount, setLocalLikeCount] = useState(0);
+
+  const story = stories[currentIndex];
+  
+  const isVideo = story?.mediaType === "VIDEO";
+  const isOwner =
+    !!currentUserEmail &&
+    !!story?.userEmail &&
+    currentUserEmail.toLowerCase() === story.userEmail.toLowerCase();
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -17,10 +29,8 @@ const StoryViewer = ({
   }, []);
 
   useEffect(() => {
-    if (!stories.length) return;
-    const currentStory = stories[currentIndex];
-    if (!currentStory) return;
-    if (currentStory.mediaType === "VIDEO") return;
+    if (!stories.length || !story) return;
+    if (isVideo) return;
 
     const timer = setTimeout(() => {
       if (currentIndex < stories.length - 1) onChangeIndex(currentIndex + 1);
@@ -28,29 +38,52 @@ const StoryViewer = ({
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [stories, currentIndex, onChangeIndex, onClose]);
+  }, [stories, currentIndex, onChangeIndex, onClose, isVideo, story]);
 
   useEffect(() => {
     setShowViewers(false);
   }, [currentIndex]);
 
-  if (!stories.length) return null;
+  useEffect(() => {
+    if (!story || !story.id) return;
+    
+    viewStory(story.id).catch(e => console.log("View err:", e));
 
-  const story = stories[currentIndex];
-  if (!story) return null;
+    setLocalHasLiked(!!story.hasLiked);
+    setLocalLikeCount(story.likeCount || 0);
 
-  const isVideo = story.mediaType === "VIDEO";
-  const isOwner =
-    !!currentUserEmail &&
-    !!story.userEmail &&
-    currentUserEmail.toLowerCase() === story.userEmail.toLowerCase();
+    if (isOwner) {
+      getStoryInsights(story.id)
+        .then((res) => setStoryInsights(res))
+        .catch(console.error);
+    }
+  }, [currentIndex, story, isOwner]);
 
-  const viewers = useMemo(() => {
-    return Array.isArray(story.viewers) ? story.viewers : [];
-  }, [story]);
+  const handleLike = async (e) => {
+    e.stopPropagation();
+    if (!story) return;
+    const previousHasLiked = localHasLiked;
+    const previousLikeCount = localLikeCount;
 
-  const viewersCount =
-    typeof story.viewersCount === "number" ? story.viewersCount : viewers.length;
+    setLocalHasLiked(!previousHasLiked);
+    setLocalLikeCount(previousHasLiked ? previousLikeCount - 1 : previousLikeCount + 1);
+
+    try {
+        if (previousHasLiked) {
+            await unlikeStory(story.id);
+        } else {
+            await likeStory(story.id);
+        }
+    } catch (err) {
+        setLocalHasLiked(previousHasLiked);
+        setLocalLikeCount(previousLikeCount);
+    }
+  };
+
+  if (!stories.length || !story) return null;
+
+  const viewers = storyInsights.viewers || [];
+  const likersIds = new Set((storyInsights.likers || []).map(l => l.userId));
 
   const goPrev = () => {
     if (currentIndex > 0) onChangeIndex(currentIndex - 1);
@@ -114,43 +147,53 @@ const StoryViewer = ({
           )}
         </div>
 
-        {isOwner && (
+        {!isOwner ? (
+          <div style={styles.bottomBar}>
+            <button style={styles.likeBtn} onClick={handleLike}>
+              {localHasLiked ? "❤️" : "🤍"} <span style={{fontSize: "14px", marginLeft: "4px", color: "white"}}>{localLikeCount}</span>
+            </button>
+          </div>
+        ) : (
           <div style={styles.bottomBar}>
             <button style={styles.showBtn} onClick={() => setShowViewers((p) => !p)}>
-              {showViewers ? "Hide viewers" : `Show viewers (${viewersCount})`}
+              {showViewers ? "Hide insights" : `👁️ ${storyInsights.viewCount}   |   ❤️ ${storyInsights.likeCount}`}
             </button>
           </div>
         )}
 
         {isOwner && showViewers && (
           <div style={styles.viewersPanel}>
-            <div style={styles.viewersTitle}>Viewed by</div>
+            <div style={styles.viewersTitle}>Views & Likes</div>
 
             {viewers.length === 0 ? (
               <div style={styles.emptyViewers}>No viewer data available</div>
             ) : (
-              viewers.map((viewer, index) => (
-                <div key={viewer.id || viewer.email || index} style={styles.viewerRow}>
-                  <div style={styles.viewerAvatar}>
-                    {viewer.profileImageUrl ? (
-                      <img
-                        src={viewer.profileImageUrl}
-                        alt={viewer.username || viewer.email || "viewer"}
-                        style={styles.viewerAvatarImg}
-                      />
-                    ) : (
-                      <div style={styles.viewerAvatarFallback}>
-                        {(viewer.username || viewer.email || "U").charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
+              viewers.map((viewer, index) => {
+                const hasLikedView = likersIds.has(viewer.userId);
+                return (
+                  <div key={viewer.id || viewer.email || index} style={styles.viewerRow}>
+                    <div style={styles.viewerAvatar}>
+                      {viewer.profileImageUrl ? (
+                        <img
+                          src={viewer.profileImageUrl}
+                          alt={viewer.username || viewer.email || "viewer"}
+                          style={styles.viewerAvatarImg}
+                        />
+                      ) : (
+                        <div style={styles.viewerAvatarFallback}>
+                          {(viewer.username || viewer.email || "U").charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
 
-                  <div style={styles.viewerMeta}>
-                    <div style={styles.viewerName}>{viewer.username || "User"}</div>
-                    <div style={styles.viewerEmail}>{viewer.email || ""}</div>
+                    <div style={styles.viewerMeta}>
+                      <div style={styles.viewerName}>{viewer.username || "User"}</div>
+                      <div style={styles.viewerEmail}>{viewer.email || ""}</div>
+                    </div>
+                    {hasLikedView && <div style={{marginLeft:"auto"}}>❤️</div>}
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         )}
@@ -168,7 +211,7 @@ const StoryViewer = ({
         </button>
 
         <button
-          style={{ ...styles.navBtn, right: isMobile ? "8px" : "12px" }}
+          style={{ ...styles.navBtn, right: isMobile ? "8px" : "12px", opacity: currentIndex === stories.length - 1 ? 0.45 : 1 }}
           onClick={goNext}
         >
           ›
@@ -193,9 +236,10 @@ const styles = {
   closeBtn: { border: "none", background: "transparent", color: "#ffffff", fontSize: "24px", cursor: "pointer" },
   mediaArea: { flex: 1, width: "100%", height: "100%" },
   media: { width: "100%", height: "100%", objectFit: "contain", background: "#000000" },
-  bottomBar: { position: "absolute", bottom: "12px", left: "12px", right: "12px", zIndex: 20, display: "flex", justifyContent: "center" },
+  bottomBar: { position: "absolute", bottom: "35px", left: "12px", right: "12px", zIndex: 20, display: "flex", justifyContent: "center" },
   showBtn: { border: "none", background: "rgba(17, 24, 39, 0.85)", color: "#ffffff", padding: "10px 14px", borderRadius: "12px", cursor: "pointer", fontWeight: "600" },
-  viewersPanel: { position: "absolute", left: "12px", right: "12px", bottom: "60px", maxHeight: "220px", overflowY: "auto", background: "rgba(17, 24, 39, 0.92)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "16px", padding: "12px", zIndex: 25 },
+  likeBtn: { display: "flex", alignItems: "center", border: "1px solid rgba(255, 255, 255, 0.4)", background: "rgba(17, 24, 39, 0.6)", color: "#ffffff", padding: "12px 18px", borderRadius: "99px", cursor: "pointer", fontSize: "20px"},
+  viewersPanel: { position: "absolute", left: "12px", right: "12px", bottom: "85px", maxHeight: "220px", overflowY: "auto", background: "rgba(17, 24, 39, 0.92)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "16px", padding: "12px", zIndex: 25 },
   viewersTitle: { color: "#ffffff", fontWeight: "700", marginBottom: "10px" },
   emptyViewers: { color: "#d1d5db", fontSize: "14px" },
   viewerRow: { display: "flex", alignItems: "center", gap: "10px", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.08)" },

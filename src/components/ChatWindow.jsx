@@ -307,12 +307,17 @@ const ChatWindow = ({ selectedUser, onMessageSent }) => {
               <div style={{ fontSize: "16px", fontWeight: "700" }}>
                 {selectedUser.username}
               </div>
-              <div style={{ fontSize: "13px", color: "#6b7280" }}>
-                {typingText
-                  ? typingText
-                  : isOtherUserOnline
-                  ? "Online"
-                  : selectedUser.email}
+              <div style={{ fontSize: "13px", color: "#6b7280", display: "flex", alignItems: "center", gap: "6px" }}>
+                {typingText ? (
+                  <span style={{ fontStyle: "italic" }}>{typingText}</span>
+                ) : isOtherUserOnline ? (
+                  <>
+                    <span style={{ width: "10px", height: "10px", backgroundColor: "#10b981", borderRadius: "50%", display: "inline-block" }}></span>
+                    <span style={{ color: "#10b981", fontWeight: "600" }}>Online</span>
+                  </>
+                ) : (
+                  <span>{selectedUser.email}</span>
+                )}
               </div>
             </div>
           </div>

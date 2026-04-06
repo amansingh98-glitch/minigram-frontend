@@ -502,11 +502,16 @@ a {
 
   .chat-list-card {
     order: 1;
+    border-radius: 16px;
+    border-left: none;
+    border-right: none;
+    margin: 0 -4px;
   }
 
   .chat-window-card {
     order: 2;
     min-height: calc(100vh - 170px);
+    border-radius: 16px;
   }
 
   .chat-bubble {

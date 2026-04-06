@@ -141,6 +141,7 @@ const Feed = ({
         return (
           <div
             key={post.id}
+            id={`post-${post.id}`}
             style={{
               ...styles.postCard,
               borderRadius: isMobile ? "18px" : "24px",
