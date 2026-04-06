@@ -11,6 +11,10 @@ import SearchPage from "./SearchPage";
 import SettingsPage from "./SettingsPage";
 import { createPost, getAllPosts } from "../services/postService";
 import { getMyProfile } from "../services/userService";
+import {
+  getNotifications,
+  getUnreadNotificationCount,
+} from "../services/notificationService";
 import { resolveMediaUrl } from "../utils/media";
 
 const HomePage = ({ onLogout }) => {
@@ -26,10 +30,21 @@ const HomePage = ({ onLogout }) => {
   const [currentProfile, setCurrentProfile] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    const handleDocClick = () => setShowNotifications(false);
+
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    document.addEventListener("click", handleDocClick);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      document.removeEventListener("click", handleDocClick);
+    };
   }, []);
 
   const currentUserName =
@@ -106,9 +121,30 @@ const HomePage = ({ onLogout }) => {
     }
   };
 
+  const loadNotifications = async () => {
+    try {
+      const data = await getNotifications();
+      setNotifications(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Notification load error:", error);
+      setNotifications([]);
+    }
+  };
+
+  const loadUnreadCount = async () => {
+    try {
+      const count = await getUnreadNotificationCount();
+      setUnreadCount(typeof count === "number" ? count : 0);
+    } catch (error) {
+      console.error("Unread count error:", error);
+      setUnreadCount(0);
+    }
+  };
+
   useEffect(() => {
     loadPosts();
     loadMyProfile();
+    loadUnreadCount();
   }, []);
 
   const handleCreatePost = async () => {
@@ -125,6 +161,7 @@ const HomePage = ({ onLogout }) => {
 
       await loadPosts();
       await loadMyProfile();
+      await loadUnreadCount();
     } catch (error) {
       console.error("Error creating post:", error);
       setMessage("Failed to create post");
@@ -163,6 +200,17 @@ const HomePage = ({ onLogout }) => {
 
     if (pageKey === "profile") {
       setSelectedProfileUserId(null);
+    }
+  };
+
+  const handleBellClick = async (e) => {
+    e.stopPropagation();
+    const next = !showNotifications;
+    setShowNotifications(next);
+
+    if (next) {
+      await loadNotifications();
+      await loadUnreadCount();
     }
   };
 
@@ -272,9 +320,49 @@ const HomePage = ({ onLogout }) => {
               ✉️
             </span>
 
-            <span style={styles.topIcon} title="Notifications">
-              🔔
-            </span>
+            <div
+              style={styles.notificationWrap}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span
+                style={styles.topIcon}
+                onClick={handleBellClick}
+                title="Notifications"
+              >
+                🔔
+              </span>
+
+              {unreadCount > 0 && (
+                <div style={styles.badge}>
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </div>
+              )}
+
+              {showNotifications && (
+                <div style={styles.notificationDropdown}>
+                  <div style={styles.notificationHeader}>Notifications</div>
+
+                  {notifications.length === 0 ? (
+                    <div style={styles.notificationEmpty}>
+                      No notifications
+                    </div>
+                  ) : (
+                    notifications.map((item, index) => (
+                      <div key={item.id || index} style={styles.notificationItem}>
+                        <div style={styles.notificationMessage}>
+                          {item.message || "Notification"}
+                        </div>
+                        {item.createdAt && (
+                          <div style={styles.notificationTime}>
+                            {new Date(item.createdAt).toLocaleString()}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
 
             <span
               style={styles.topIcon}
@@ -422,6 +510,74 @@ const styles = {
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
+  },
+
+  notificationWrap: {
+    position: "relative",
+  },
+
+  badge: {
+    position: "absolute",
+    top: "-6px",
+    right: "-8px",
+    minWidth: "18px",
+    height: "18px",
+    borderRadius: "999px",
+    background: "#ef4444",
+    color: "#ffffff",
+    fontSize: "11px",
+    fontWeight: "700",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "0 5px",
+  },
+
+  notificationDropdown: {
+    position: "absolute",
+    top: "36px",
+    right: 0,
+    width: "290px",
+    maxHeight: "320px",
+    overflowY: "auto",
+    background: "#ffffff",
+    border: "1px solid #e5e7eb",
+    borderRadius: "16px",
+    boxShadow: "0 12px 30px rgba(0,0,0,0.12)",
+    padding: "10px",
+    zIndex: 1200,
+  },
+
+  notificationHeader: {
+    fontSize: "15px",
+    fontWeight: "700",
+    color: "#111827",
+    padding: "6px 8px 10px 8px",
+    borderBottom: "1px solid #f3f4f6",
+    marginBottom: "6px",
+  },
+
+  notificationEmpty: {
+    fontSize: "14px",
+    color: "#6b7280",
+    padding: "12px 8px",
+  },
+
+  notificationItem: {
+    padding: "10px 8px",
+    borderBottom: "1px solid #f3f4f6",
+  },
+
+  notificationMessage: {
+    fontSize: "14px",
+    color: "#111827",
+    lineHeight: "1.4",
+  },
+
+  notificationTime: {
+    fontSize: "11px",
+    color: "#6b7280",
+    marginTop: "4px",
   },
 
   contentWrapper: (isMobile) => ({
