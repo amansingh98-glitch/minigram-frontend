@@ -5,6 +5,8 @@ let stompClient = null;
 let activeChatKey = null;
 let isConnecting = false;
 
+let globalStompClient = null;
+
 // Mutable listeners object to avoid stale React closures
 const chatListeners = {
   onMessageReceived: null,
@@ -290,4 +292,48 @@ export const disconnectChatSocket = async () => {
   stompClient = null;
   activeChatKey = null;
   isConnecting = false;
+};
+
+export const connectGlobalSocket = (currentUserId, onNotificationReceived) => {
+  if (!currentUserId) return;
+
+  if (globalStompClient?.connected) {
+    return globalStompClient;
+  }
+
+  const client = new Client({
+    brokerURL: `${WS_BASE_URL}/ws-chat`,
+    reconnectDelay: 2000,
+    heartbeatIncoming: 10000,
+    heartbeatOutgoing: 10000,
+    debug: () => {},
+  });
+
+  client.onConnect = () => {
+    client.subscribe(`/topic/notifications/${currentUserId}`, (message) => {
+      const payload = JSON.parse(message.body);
+      if (onNotificationReceived) {
+        onNotificationReceived(payload);
+      }
+    });
+  };
+
+  client.onStompError = (frame) => {
+    console.error("Global STOMP error:", frame);
+  };
+
+  globalStompClient = client;
+  client.activate();
+  return client;
+};
+
+export const disconnectGlobalSocket = async () => {
+  if (globalStompClient) {
+    try {
+      await globalStompClient.deactivate();
+    } catch (e) {
+      console.error("Global socket disconnect error:", e);
+    }
+    globalStompClient = null;
+  }
 };

@@ -17,7 +17,7 @@ import {
   getUnreadNotificationCount,
   markNotificationsAsRead,
 } from "../services/notificationService";
-import { setOnline, setOffline } from "../services/chatService";
+import { setOnline, setOffline, connectGlobalSocket, disconnectGlobalSocket } from "../services/chatService";
 import { resolveMediaUrl } from "../utils/media";
 
 const HomePage = ({ onLogout }) => {
@@ -36,6 +36,7 @@ const HomePage = ({ onLogout }) => {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [toastMessage, setToastMessage] = useState(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -149,7 +150,6 @@ const HomePage = ({ onLogout }) => {
     loadMyProfile();
     loadUnreadCount();
 
-    // Notify backend user is online
     setOnline().catch(console.error);
 
     const handleBeforeUnload = () => {
@@ -161,8 +161,31 @@ const HomePage = ({ onLogout }) => {
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
       setOffline().catch(console.error);
+      disconnectGlobalSocket();
     };
   }, []);
+
+  useEffect(() => {
+    if (currentProfile?.id) {
+      connectGlobalSocket(currentProfile.id, (payload) => {
+        if (
+          activePage === "messages" &&
+          selectedChatUser?.userId === payload.senderId
+        ) {
+          return; // Ignore if we are actively chatting with them
+        }
+        
+        if (payload.senderId !== currentProfile.id) {
+           setToastMessage({
+             senderName: payload.senderName || "Someone",
+             text: payload.messageType === "FILE" || payload.messageType === "IMAGE" ? "Sent an attachment" : payload.messageText,
+             senderId: payload.senderId
+           });
+           setTimeout(() => setToastMessage(null), 5000);
+        }
+      });
+    }
+  }, [currentProfile, activePage, selectedChatUser]);
 
   const handleCreatePost = async () => {
     if (!content.trim() && !selectedImage) {
@@ -440,6 +463,34 @@ const HomePage = ({ onLogout }) => {
           onNavigate={handleNavigate}
         />
       )}
+
+      {toastMessage && (
+        <div
+          onClick={() => handleOpenChat({ userId: toastMessage.senderId, username: toastMessage.senderName })}
+          style={{
+            position: "fixed",
+            bottom: isMobile ? "80px" : "30px",
+            right: "20px",
+            background: "#2563eb",
+            color: "white",
+            padding: "12px 18px",
+            borderRadius: "12px",
+            boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+            cursor: "pointer",
+            zIndex: 9999,
+            display: "flex",
+            flexDirection: "column",
+            gap: "4px",
+            maxWidth: "300px",
+            animation: "slideIn 0.3s ease-out forwards",
+          }}
+        >
+          <strong style={{ fontSize: "14px" }}>New message from {toastMessage.senderName}</strong>
+          <span style={{ fontSize: "13px", opacity: 0.9, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {toastMessage.text}
+          </span>
+        </div>
+      )}
     </div>
   );
 };
@@ -653,6 +704,10 @@ const styles = {
 const globalStyles = `
 ::-webkit-scrollbar {
   display: none;
+}
+@keyframes slideIn {
+  from { transform: translateY(100px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 `;
 export default HomePage;
