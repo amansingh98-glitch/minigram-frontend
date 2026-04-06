@@ -150,12 +150,15 @@ const Feed = ({
             <div
               style={{
                 ...styles.postHeader,
-                flexDirection: isMobile ? "column" : "row",
-                alignItems: isMobile ? "flex-start" : "center",
+                flexDirection: isMobile ? "row" : "row",
+                alignItems: "center",
+                justifyContent: "space-between",
                 padding: isMobile ? "12px" : "16px",
+                flexWrap: "wrap",
+                gap: "12px",
               }}
             >
-              <div style={styles.headerTopRow}>
+              <div style={{ ...styles.headerTopRow, flex: 1 }}>
                 {post.profileImageUrl ? (
                   <img
                     src={post.profileImageUrl}
@@ -186,17 +189,14 @@ const Feed = ({
                 className="three-dot-menu-container"
                 style={{
                   ...styles.topActionWrap,
-                  width: isMobile ? "100%" : "auto",
-                  justifyContent: isMobile ? "flex-start" : "flex-end",
+                  width: "auto",
+                  justifyContent: "flex-end",
                   position: "relative",
                   alignItems: "center"
                 }}
               >
                 <button
-                  style={{
-                    ...styles.messageButton,
-                    width: isMobile ? "100%" : "auto",
-                  }}
+                  style={styles.messageButton}
                   onClick={() =>
                     onMessageUser &&
                     onMessageUser({
