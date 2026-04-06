@@ -9,6 +9,7 @@ import {
   sendTypingStatus,
 } from "../services/chatService";
 import { getMyProfile } from "../services/userService";
+import { API_BASE_URL } from "../config";
 
 const ChatWindow = ({ selectedUser, onMessageSent }) => {
   const [messages, setMessages] = useState([]);
@@ -61,7 +62,7 @@ const ChatWindow = ({ selectedUser, onMessageSent }) => {
 
     try {
       const token = localStorage.getItem("token");
-      await fetch(`http://localhost:8080/chat/seen/${selectedUserId}`, {
+      await fetch(`${API_BASE_URL}/chat/seen/${selectedUserId}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
