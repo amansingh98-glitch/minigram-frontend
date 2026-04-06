@@ -135,7 +135,7 @@ export const deleteMessageForMe = async (messageId) => {
   const token = localStorage.getItem("token");
 
   const response = await fetch(`${API_BASE_URL}/chat/delete-for-me/${messageId}`, {
-    method: "POST",
+    method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -156,7 +156,7 @@ export const deleteMessageForEveryone = async (messageId) => {
   const response = await fetch(
     `${API_BASE_URL}/chat/delete-for-everyone/${messageId}`,
     {
-      method: "POST",
+      method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
       },

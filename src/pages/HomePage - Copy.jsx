@@ -14,7 +14,6 @@ import { getMyProfile } from "../services/userService";
 import {
   getNotifications,
   getUnreadNotificationCount,
-  markNotificationsAsRead,
 } from "../services/notificationService";
 import { resolveMediaUrl } from "../utils/media";
 
@@ -211,12 +210,7 @@ const HomePage = ({ onLogout }) => {
 
     if (next) {
       await loadNotifications();
-      try {
-        await markNotificationsAsRead();
-        setUnreadCount(0);
-      } catch (err) {
-        console.error(err);
-      }
+      await loadUnreadCount();
     }
   };
 
