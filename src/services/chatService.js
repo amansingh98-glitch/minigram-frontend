@@ -5,6 +5,14 @@ let stompClient = null;
 let activeChatKey = null;
 let isConnecting = false;
 
+// Mutable listeners object to avoid stale React closures
+const chatListeners = {
+  onMessageReceived: null,
+  onConversationRefresh: null,
+  onTypingReceived: null,
+  onOnlineStatus: null,
+};
+
 const WS_BASE_URL = API_BASE_URL.replace(/^http/, "ws");
 
 export const getConversations = async () => {
@@ -182,6 +190,12 @@ export const connectChatSocket = async ({
 }) => {
   if (!currentUserId || !selectedUserId) return null;
 
+  // Always update listeners to the latest React render closure
+  chatListeners.onMessageReceived = onMessageReceived;
+  chatListeners.onConversationRefresh = onConversationRefresh;
+  chatListeners.onTypingReceived = onTypingReceived;
+  chatListeners.onOnlineStatus = onOnlineStatus;
+
   const nextChatKey = `${currentUserId}-${selectedUserId}`;
 
   if (stompClient?.connected && activeChatKey === nextChatKey) {
@@ -207,7 +221,9 @@ export const connectChatSocket = async ({
 
   const client = new Client({
     brokerURL: `${WS_BASE_URL}/ws-chat`,
-    reconnectDelay: 5000,
+    reconnectDelay: 2000,
+    heartbeatIncoming: 10000, // Important for Render.com to keep connection alive
+    heartbeatOutgoing: 10000,
     debug: () => {},
   });
 
@@ -216,28 +232,28 @@ export const connectChatSocket = async ({
 
     client.subscribe(`/topic/chat/${currentUserId}/${selectedUserId}`, (message) => {
       const payload = JSON.parse(message.body);
-      if (onMessageReceived) {
-        onMessageReceived(payload);
+      if (chatListeners.onMessageReceived) {
+        chatListeners.onMessageReceived(payload);
       }
     });
 
     client.subscribe(`/topic/conversations/${currentUserId}`, () => {
-      if (onConversationRefresh) {
-        onConversationRefresh();
+      if (chatListeners.onConversationRefresh) {
+        chatListeners.onConversationRefresh();
       }
     });
 
     client.subscribe(`/topic/typing/${currentUserId}/${selectedUserId}`, (message) => {
       const payload = JSON.parse(message.body);
-      if (onTypingReceived) {
-        onTypingReceived(payload);
+      if (chatListeners.onTypingReceived) {
+        chatListeners.onTypingReceived(payload);
       }
     });
 
     client.subscribe(`/topic/online-status`, (message) => {
       const payload = JSON.parse(message.body);
-      if (onOnlineStatus) {
-        onOnlineStatus(payload);
+      if (chatListeners.onOnlineStatus) {
+        chatListeners.onOnlineStatus(payload);
       }
     });
   };
