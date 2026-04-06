@@ -70,6 +70,27 @@ const ReelItem = ({ post, isActive, isMobile, onCommentChange }) => {
     }
   };
 
+  const handleShare = async (e) => {
+    e.stopPropagation();
+    try {
+      const shareUrl = `${window.location.origin}`; // Basic sharing URL fallback
+      const textToShare = `Check out this reel by ${post.userName} on MiniGram!`;
+
+      if (navigator.share) {
+        await navigator.share({
+          title: "MiniGram Reel",
+          text: textToShare,
+          url: shareUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(textToShare + " " + shareUrl);
+        alert("Link copied to clipboard!");
+      }
+    } catch (err) {
+      console.log("Error sharing:", err);
+    }
+  };
+
   return (
     <div style={styles.reelWrapper(isMobile)}>
       <div style={styles.videoContainer} onClick={togglePlay}>
@@ -102,8 +123,14 @@ const ReelItem = ({ post, isActive, isMobile, onCommentChange }) => {
             <span style={styles.actionText}>{post.comments?.length || 0}</span>
           </div>
 
-          <div style={styles.actionItem}>
-            <div style={styles.actionIcon}>🔗</div>
+          <div style={styles.actionItem} onClick={handleShare}>
+            <div style={styles.actionIcon}>
+              {/* Airplane/Share SVG inspired by Instagram */}
+              <svg aria-label="Share" color="#ffffff" fill="#ffffff" height="24" role="img" viewBox="0 0 24 24" width="24" style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}>
+                <line fill="none" stroke="#ffffff" strokeLinejoin="round" strokeWidth="2" x1="22" x2="9.218" y1="3" y2="10.083"></line>
+                <polygon fill="none" points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334" stroke="#ffffff" strokeLinejoin="round" strokeWidth="2"></polygon>
+              </svg>
+            </div>
             <span style={styles.actionText}>Share</span>
           </div>
         </div>
