@@ -163,16 +163,6 @@ const ProfilePage = ({ userId, onMessageUser }) => {
 
   return (
     <div className="profile-container">
-      {/* Mobile Top Bar */}
-      <div className="profile-mobile-topbar">
-        <div style={{ width: "24px" }}></div> {/* Placeholder for back button if needed */}
-        <div className="profile-mobile-username">
-          {profile.username}
-          <span style={{ fontSize: "12px" }}>▼</span>
-        </div>
-        <div className="profile-mobile-menu">☰</div>
-      </div>
-
       <div className="profile-main-header">
         <div className="profile-top-section">
           <div className="profile-avatar-wrapper" onClick={() => profile.currentUserProfile && fileRef.current?.click()}>
