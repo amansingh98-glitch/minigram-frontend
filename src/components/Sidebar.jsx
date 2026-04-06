@@ -7,6 +7,7 @@ const Sidebar = ({ onLogout, activePage = "home", onNavigate }) => {
     { icon: "🏠", label: "Home", key: "home" },
     { icon: "🔍", label: "Search", key: "search" },
     { icon: "🧭", label: "Explore", key: "explore" },
+    { icon: "🎬", label: "Reels", key: "reels" },
     { icon: "💬", label: "Messages", key: "messages" },
     { icon: "🔔", label: "Notifications", key: "notifications" },
     { icon: "👤", label: "Profile", key: "profile" },
