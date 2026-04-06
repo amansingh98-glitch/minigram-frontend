@@ -7,6 +7,7 @@ import {
 } from "../services/userService";
 import { toggleFollow as toggleFollowApi } from "../services/followService";
 import { resolveMediaUrl } from "../utils/media";
+import { deletePost } from "../services/postService";
 import SinglePostModal from "../components/SinglePostModal";
 
 const ProfilePage = ({ userId, onMessageUser }) => {
@@ -20,8 +21,21 @@ const ProfilePage = ({ userId, onMessageUser }) => {
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [activePost, setActivePost] = useState(null);
+  const [hoveredPostId, setHoveredPostId] = useState(null);
+  const [activeDropdownPostId, setActiveDropdownPostId] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState({});
 
   const fileRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(".grid-dropdown-container")) {
+        setActiveDropdownPostId(null);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
 
   const loadProfile = async () => {
     try {
@@ -115,6 +129,24 @@ const ProfilePage = ({ userId, onMessageUser }) => {
       if (fileRef.current) {
         fileRef.current.value = "";
       }
+    }
+  };
+
+  const handleDeletePost = async (postId) => {
+    try {
+      setDeleteLoading((prev) => ({ ...prev, [postId]: true }));
+      await deletePost(postId);
+      setProfile((prev) => ({
+        ...prev,
+        posts: prev.posts.filter((p) => p.id !== postId),
+        postsCount: Math.max(0, (prev.postsCount || 1) - 1)
+      }));
+    } catch (error) {
+      console.error("Post delete error:", error);
+      alert("Failed to delete post");
+    } finally {
+      setDeleteLoading((prev) => ({ ...prev, [postId]: false }));
+      setActiveDropdownPostId(null);
     }
   };
 
@@ -279,11 +311,56 @@ const ProfilePage = ({ userId, onMessageUser }) => {
               key={post.id}
               style={styles.postCard}
               onClick={() => setActivePost(post)}
+              onMouseEnter={() => setHoveredPostId(post.id)}
+              onMouseLeave={() => setHoveredPostId(null)}
             >
               {post.imageUrl ? (
                 <img src={post.imageUrl} alt="post" style={styles.postImage} />
               ) : (
                 <div style={styles.postContent}>{post.content}</div>
+              )}
+
+              {/* Hover Overlay for Likes/Comments */}
+              {hoveredPostId === post.id && (
+                <div style={styles.hoverOverlay}>
+                  <div style={styles.hoverStat}>
+                    ❤️ {post.likeCount || 0}
+                  </div>
+                  <div style={styles.hoverStat}>
+                    💬 {post.comments?.length || 0}
+                  </div>
+                </div>
+              )}
+
+              {/* 3-Dot Menu for direct delete */}
+              {profile.currentUserProfile && (
+                <div
+                  className="grid-dropdown-container"
+                  style={styles.absMenuContainer}
+                  onClick={(e) => e.stopPropagation()} /* Prevent opening single post modal */
+                >
+                  <button
+                    style={styles.threeDotBtn}
+                    onClick={() =>
+                      setActiveDropdownPostId(
+                        activeDropdownPostId === post.id ? null : post.id
+                      )
+                    }
+                  >
+                    ⋮
+                  </button>
+                  {activeDropdownPostId === post.id && (
+                    <div style={styles.dropdownMenu}>
+                      <button
+                        style={styles.dropdownDeleteBtn}
+                        onClick={() => handleDeletePost(post.id)}
+                        disabled={deleteLoading[post.id]}
+                      >
+                        {deleteLoading[post.id] ? "Deleting..." : "Delete Post"}
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           ))}
@@ -485,6 +562,72 @@ const styles = {
     display: "-webkit-box",
     WebkitLineClamp: 4,
     WebkitBoxOrient: "vertical",
+  },
+  hoverOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "24px",
+    color: "#ffffff",
+    fontWeight: "700",
+    fontSize: "18px",
+    pointerEvents: "none", /* Allow clicks to pass through to open modal */
+  },
+  hoverStat: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+  },
+  absMenuContainer: {
+    position: "absolute",
+    top: "8px",
+    right: "8px",
+    zIndex: 10,
+  },
+  threeDotBtn: {
+    background: "rgba(255, 255, 255, 0.8)",
+    border: "None",
+    borderRadius: "50%",
+    width: "32px",
+    height: "32px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "20px",
+    fontWeight: "800",
+    color: "#1f2937",
+    cursor: "pointer",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+    lineHeight: 1,
+  },
+  dropdownMenu: {
+    position: "absolute",
+    top: "38px",
+    right: "0",
+    background: "#ffffff",
+    border: "1px solid #e5e7eb",
+    borderRadius: "12px",
+    boxShadow: "0 4px 10px rgba(0,0,0,0.15)",
+    padding: "6px",
+    zIndex: 20,
+    minWidth: "120px",
+  },
+  dropdownDeleteBtn: {
+    width: "100%",
+    border: "none",
+    background: "#fef2f2",
+    color: "#dc2626",
+    padding: "10px 12px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontWeight: "600",
+    textAlign: "left",
   },
 };
 
