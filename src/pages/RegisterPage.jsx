@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { registerUser, verifyRegistrationOtp, resendVerificationOtp } from "../services/authService";
 
 function RegisterPage({ goToLogin }) {
@@ -17,17 +17,32 @@ function RegisterPage({ goToLogin }) {
       setIsError(true);
       return;
     }
+    if (password.length < 4) {
+      setMessage("Password must be at least 4 characters");
+      setIsError(true);
+      return;
+    }
 
     try {
       setLoading(true);
-      const data = await registerUser({ username, email, password });
-      
-      // If atomic registration works, this returns success and we move to verify
-      setMessage("Account created! Please enter the 6-digit OTP sent to your email.");
+      setMessage("Creating your premium account... 🚀");
       setIsError(false);
-      setStage("verify");
+      
+      const resText = await registerUser({ username, email, password });
+      
+      // The backend returns 201 Created and a success string
+      if (resText.toLowerCase().includes("successful") || resText.toLowerCase().includes("verify")) {
+        setMessage("Account created! Please enter the 6-digit OTP sent to your email.");
+        setIsError(false);
+        setStage("verify");
+      } else {
+        // This handles cases where backend might return 200 but logic-wise it's a message
+        setMessage(resText);
+        setIsError(true);
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Register Error:", error);
+      // Detailed error from GlobalExceptionHandler
       const errMsg = error.message || "Registration failed. Check your network or SMTP settings.";
       setMessage(errMsg);
       setIsError(true);
@@ -46,7 +61,8 @@ function RegisterPage({ goToLogin }) {
     try {
       setLoading(true);
       const response = await verifyRegistrationOtp(email, otp);
-      setMessage(response.message || "Verification successful! You can now login.");
+      // response is { message: "..." }
+      setMessage(response.message || "Verification successful! Redirecting to login...");
       setIsError(false);
       setTimeout(() => goToLogin(), 2000);
     } catch (error) {
@@ -61,7 +77,9 @@ function RegisterPage({ goToLogin }) {
     try {
       setLoading(true);
       const response = await resendVerificationOtp(email);
-      setMessage(response || "OTP resent successfully to " + email);
+      // response might be a string or JSON depending on final service
+      const msg = typeof response === "string" ? response : (response.message || "OTP resent!");
+      setMessage(msg);
       setIsError(false);
     } catch (error) {
       setMessage(error.message || "Failed to resend OTP");
@@ -108,14 +126,14 @@ function RegisterPage({ goToLogin }) {
                 <label style={styles.label}>Password</label>
                 <input
                   type="password"
-                  placeholder="Minimum 6 characters"
+                  placeholder="Minimum 4 characters"
                   style={styles.input}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
               <button style={styles.button} onClick={handleRegister} disabled={loading}>
-                {loading ? "Creating Account..." : "Create Account"}
+                {loading && stage === "register" ? "Processing..." : "Create Account"}
               </button>
             </>
           ) : (
@@ -189,127 +207,36 @@ const styles = {
     boxShadow: "0 25px 60px rgba(37, 99, 235, 0.12)",
     border: "1px solid rgba(255, 255, 255, 0.3)",
   },
-  brand: {
-    textAlign: "center",
-    marginBottom: "32px",
-  },
+  brand: { textAlign: "center", marginBottom: "32px" },
   title: {
-    fontSize: "48px",
-    fontWeight: "900",
-    margin: "0 0 8px 0",
+    fontSize: "48px", fontWeight: "900", margin: "0 0 8px 0",
     background: "linear-gradient(135deg, #111827, #2563eb)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
+    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
     letterSpacing: "-2px",
   },
-  subtitle: {
-    margin: 0,
-    color: "#4b5563",
-    fontSize: "17px",
-    fontWeight: "500",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "20px",
-  },
-  inputGroup: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-  },
-  label: {
-    fontSize: "14px",
-    fontWeight: "600",
-    color: "#374151",
-    marginLeft: "4px",
-  },
+  subtitle: { margin: 0, color: "#4b5563", fontSize: "17px", fontWeight: "500" },
+  form: { display: "flex", flexDirection: "column", gap: "20px" },
+  inputGroup: { display: "flex", flexDirection: "column", gap: "8px" },
+  label: { fontSize: "14px", fontWeight: "600", color: "#374151" },
   input: {
-    width: "100%",
-    padding: "16px",
-    borderRadius: "16px",
-    border: "1px solid #e5e7eb",
-    background: "#ffffff",
-    fontSize: "15px",
-    outline: "none",
-    boxSizing: "border-box",
-    transition: "all 0.2s ease",
-    ":focus": {
-      borderColor: "#2563eb",
-      boxShadow: "0 0 0 4px rgba(37, 99, 235, 0.1)",
-    }
+    width: "100%", padding: "16px", borderRadius: "16px", border: "1px solid #e5e7eb",
+    background: "#ffffff", fontSize: "15px", outline: "none", boxSizing: "border-box"
   },
   button: {
-    width: "100%",
-    padding: "16px",
-    borderRadius: "16px",
-    border: "none",
-    background: "linear-gradient(135deg, #2563eb, #4f46e5)",
-    color: "#ffffff",
-    fontSize: "16px",
-    fontWeight: "700",
-    cursor: "pointer",
-    boxShadow: "0 10px 25px rgba(37, 99, 235, 0.25)",
-    transition: "transform 0.2s ease, filter 0.2s ease",
-    ":active": {
-      transform: "scale(0.98)",
-    }
+    width: "100%", padding: "16px", borderRadius: "16px", border: "none",
+    background: "linear-gradient(135deg, #2563eb, #4f46e5)", color: "#ffffff",
+    fontSize: "16px", fontWeight: "700", cursor: "pointer",
+    boxShadow: "0 10px 25px rgba(37, 99, 235, 0.25)"
   },
-  footer: {
-    textAlign: "center",
-    marginTop: "10px",
-  },
-  footerText: {
-    fontSize: "14px",
-    color: "#6b7280",
-    margin: 0,
-  },
-  link: {
-    color: "#2563eb",
-    fontWeight: "700",
-    cursor: "pointer",
-    textDecoration: "none",
-    marginLeft: "4px",
-  },
-  otpHeader: {
-    textAlign: "center",
-    marginBottom: "10px",
-  },
-  otpText: {
-    fontSize: "14px",
-    color: "#4b5563",
-    lineHeight: "1.6",
-  },
-  resendBox: {
-    textAlign: "center",
-    marginTop: "-10px",
-  },
-  resendBtn: {
-    color: "#2563eb",
-    fontWeight: "700",
-    cursor: "pointer",
-    fontSize: "14px",
-  },
-  successBox: {
-    padding: "14px",
-    borderRadius: "12px",
-    background: "#f0fdf4",
-    color: "#166534",
-    fontSize: "14px",
-    fontWeight: "600",
-    textAlign: "center",
-    border: "1px solid #bbf7d0",
-  },
-  errorBox: {
-    padding: "14px",
-    borderRadius: "12px",
-    background: "#fef2f2",
-    color: "#991b1b",
-    fontSize: "14px",
-    fontWeight: "600",
-    textAlign: "center",
-    border: "1px solid #fecaca",
-  }
+  footer: { textAlign: "center", marginTop: "10px" },
+  footerText: { fontSize: "14px", color: "#6b7280", margin: 0 },
+  link: { color: "#2563eb", fontWeight: "700", cursor: "pointer", marginLeft: "4px" },
+  otpHeader: { textAlign: "center", marginBottom: "10px" },
+  otpText: { fontSize: "14px", color: "#4b5563", lineHeight: "1.6" },
+  resendBox: { textAlign: "center", marginTop: "-10px" },
+  resendBtn: { color: "#2563eb", fontWeight: "700", cursor: "pointer", fontSize: "14px" },
+  successBox: { padding: "14px", borderRadius: "12px", background: "#f0fdf4", color: "#166534", fontSize: "14px", fontWeight: "600", textAlign: "center", border: "1px solid #bbf7d0" },
+  errorBox: { padding: "14px", borderRadius: "12px", background: "#fef2f2", color: "#991b1b", fontSize: "14px", fontWeight: "600", textAlign: "center", border: "1px solid #fecaca" }
 };
 
 export default RegisterPage;

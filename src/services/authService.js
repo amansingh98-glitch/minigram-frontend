@@ -1,54 +1,50 @@
 import { API_BASE_URL } from "../config";
 
+const handleResponse = async (response) => {
+  const raw = await response.text();
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch (e) {
+    data = raw;
+  }
+
+  if (!response.ok) {
+    const errorMsg = (typeof data === 'object' && data.message) ? data.message : (typeof data === 'string' ? data : "An unexpected error occurred");
+    throw new Error(errorMsg);
+  }
+  return data;
+};
+
 export const registerUser = async (userData) => {
   const response = await fetch(`${API_BASE_URL}/users/register`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(userData),
   });
-
-  const raw = await response.text();
-
-  if (!response.ok) {
-    throw new Error(raw || "Register failed");
-  }
-
-  return raw;
+  return handleResponse(response);
 };
 
 export const loginUser = async (loginData) => {
   const response = await fetch(`${API_BASE_URL}/users/login`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(loginData),
   });
 
-  const raw = await response.text();
-
-  if (!response.ok) {
-    throw new Error(raw || "Login failed");
-  }
-
-  const data = raw ? JSON.parse(raw) : {};
+  const data = await handleResponse(response);
 
   if (data.token) {
     localStorage.setItem("token", data.token);
   }
-
   if (data.email) {
     localStorage.setItem("userEmail", data.email);
   } else if (loginData.email) {
     localStorage.setItem("userEmail", loginData.email);
   }
-
   if (data.username) {
     localStorage.setItem("username", data.username);
   }
-
   if (data.profileImageUrl) {
     localStorage.setItem("profileImageUrl", data.profileImageUrl);
   }
@@ -59,71 +55,35 @@ export const loginUser = async (loginData) => {
 export const sendForgotPasswordOtp = async (email) => {
   const response = await fetch(`${API_BASE_URL}/users/forgot-password/send-otp`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email }),
   });
-
-  const raw = await response.text();
-
-  if (!response.ok) {
-    throw new Error(raw || "Failed to send OTP");
-  }
-
-  return raw;
+  return handleResponse(response);
 };
 
 export const resetPasswordWithOtp = async ({ email, otp, newPassword }) => {
   const response = await fetch(`${API_BASE_URL}/users/forgot-password/reset`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, otp, newPassword }),
   });
-
-  const raw = await response.text();
-
-  if (!response.ok) {
-    throw new Error(raw || "Failed to reset password");
-  }
-
-  return raw;
+  return handleResponse(response);
 };
 
 export const verifyRegistrationOtp = async (email, otp) => {
   const response = await fetch(`${API_BASE_URL}/api/auth/verify-otp`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, otp }),
   });
-
-  const raw = await response.json();
-
-  if (!response.ok) {
-    throw new Error(raw.message || "Invalid or expired OTP");
-  }
-
-  return raw;
+  return handleResponse(response);
 };
 
 export const resendVerificationOtp = async (email) => {
   const response = await fetch(`${API_BASE_URL}/api/auth/resend-otp`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email }),
   });
-
-  const raw = await response.text();
-
-  if (!response.ok) {
-    throw new Error(raw || "Failed to resend OTP");
-  }
-
-  return raw;
+  return handleResponse(response);
 };
