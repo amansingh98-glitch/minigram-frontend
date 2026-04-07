@@ -5,11 +5,13 @@ import {
   getUserProfile,
   uploadProfileImage,
 } from "../services/userService";
-import { toggleFollow as toggleFollowApi } from "../services/followService";
+import { toggleFollow as toggleFollowApi, getFollowers, getFollowing } from "../services/followService";
 import { resolveMediaUrl } from "../utils/media";
 import { deletePost } from "../services/postService";
 import SinglePostModal from "../components/SinglePostModal";
+import UserListModal from "../components/UserListModal";
 import "../styles/ProfilePage.css";
+import "../styles/UserListModal.css";
 
 const ProfilePage = ({ userId, onMessageUser }) => {
   const [profile, setProfile] = useState(null);
@@ -25,6 +27,11 @@ const ProfilePage = ({ userId, onMessageUser }) => {
   const [hoveredPostId, setHoveredPostId] = useState(null);
   const [activeDropdownPostId, setActiveDropdownPostId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState({});
+
+  const [isUserListOpen, setIsUserListOpen] = useState(false);
+  const [userListTitle, setUserListTitle] = useState("");
+  const [userListData, setUserListData] = useState([]);
+  const [listLoading, setListLoading] = useState(false);
 
   const [activeTab, setActiveTab] = useState("grid");
 
@@ -153,6 +160,34 @@ const ProfilePage = ({ userId, onMessageUser }) => {
     }
   };
 
+  const handleShowFollowers = async () => {
+    try {
+      setListLoading(true);
+      setUserListTitle("Followers");
+      setIsUserListOpen(true);
+      const data = await getFollowers(profile.id);
+      setUserListData(data);
+    } catch (error) {
+      console.error("Fetch followers error:", error);
+    } finally {
+      setListLoading(false);
+    }
+  };
+
+  const handleShowFollowing = async () => {
+    try {
+      setListLoading(true);
+      setUserListTitle("Following");
+      setIsUserListOpen(true);
+      const data = await getFollowing(profile.id);
+      setUserListData(data);
+    } catch (error) {
+      console.error("Fetch following error:", error);
+    } finally {
+      setListLoading(false);
+    }
+  };
+
   if (loading) {
     return <div className="profile-container" style={{ padding: "20px", textAlign: "center" }}>Loading...</div>;
   }
@@ -192,11 +227,11 @@ const ProfilePage = ({ userId, onMessageUser }) => {
               <span className="profile-stat-number">{profile.postsCount || 0}</span>
               <span className="profile-stat-label">posts</span>
             </div>
-            <div className="profile-stat-box">
+            <div className="profile-stat-box" style={{ cursor: "pointer" }} onClick={handleShowFollowers}>
               <span className="profile-stat-number">{profile.followersCount || 0}</span>
               <span className="profile-stat-label">followers</span>
             </div>
-            <div className="profile-stat-box">
+            <div className="profile-stat-box" style={{ cursor: "pointer" }} onClick={handleShowFollowing}>
               <span className="profile-stat-number">{profile.followingCount || 0}</span>
               <span className="profile-stat-label">following</span>
             </div>
@@ -363,6 +398,20 @@ const ProfilePage = ({ userId, onMessageUser }) => {
           loadProfile();
         }}
         onUpdate={loadProfile}
+      />
+
+      <UserListModal 
+        isOpen={isUserListOpen}
+        onClose={() => setIsUserListOpen(false)}
+        title={userListTitle}
+        users={userListData}
+        onToggleFollow={async (id) => {
+            await toggleFollowApi(id);
+            // Refresh list if needed or update local state
+            if (userListTitle === "Followers") handleShowFollowers();
+            else handleShowFollowing();
+            loadProfile();
+        }}
       />
     </div>
   );

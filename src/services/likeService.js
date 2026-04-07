@@ -26,3 +26,12 @@ export const toggleLike = async (postId) => {
     return {};
   }
 };
+
+export const getLikes = async (postId) => {
+  const userEmail = getUserEmail();
+  const response = await fetch(
+    `${API_BASE_URL}/likes/${postId}?userEmail=${encodeURIComponent(userEmail)}`
+  );
+  if (!response.ok) throw new Error("Failed to fetch likes");
+  return await response.json();
+};

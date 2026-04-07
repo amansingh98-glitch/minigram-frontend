@@ -470,37 +470,48 @@ const HomePage = ({ onLogout }) => {
           onClick={() => handleOpenChat({ userId: toastMessage.senderId, username: toastMessage.senderName })}
           style={{
             position: "fixed",
-            top: "20px",
+            top: "12px",
             left: "50%",
             transform: "translateX(-50%)",
-            background: "#262626", // Instagram dark pill background
-            color: "#fafafa",
-            padding: "10px 16px",
-            borderRadius: "30px", // Pill shape
-            boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
+            background: "#ffffff",
+            borderLeft: "5px solid #25D366",
+            color: "#1f2937",
+            padding: "12px 20px",
+            borderRadius: "12px",
+            boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
             cursor: "pointer",
-            zIndex: 9999,
+            zIndex: 10000,
             display: "flex",
             alignItems: "center",
-            gap: "12px",
-            minWidth: "280px",
-            maxWidth: "90%",
-            animation: "slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards",
+            gap: "14px",
+            width: isMobile ? "94%" : "450px",
+            animation: "notificationSlideDown 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards",
           }}
         >
           <div style={{
-            width: "38px", height: "38px", borderRadius: "50%", background: "linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)", display: "flex", alignItems: "center", justifyContent: "center"
+            width: "44px", 
+            height: "44px", 
+            borderRadius: "50%", 
+            background: "#25D366", 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center",
+            flexShrink: 0,
+            color: "#ffffff",
+            fontSize: "20px"
           }}>
-             <div style={{ width: "34px", height: "34px", borderRadius: "50%", background: "#262626", color: "#fafafa", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: "bold" }}>
-                {toastMessage.senderName.charAt(0).toUpperCase()}
+             {toastMessage.senderName.charAt(0).toUpperCase()}
+          </div>
+          <div style={{ flex: 1, overflow: "hidden" }}>
+             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
+                <strong style={{ fontSize: "15px", fontWeight: "700", color: "#075E54" }}>{toastMessage.senderName}</strong>
+                <span style={{ fontSize: "11px", color: "#25D366", fontWeight: "600" }}>Just now</span>
+             </div>
+             <div style={{ fontSize: "14px", color: "#4b5563", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+               {toastMessage.text}
              </div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
-             <strong style={{ fontSize: "14px", fontWeight: "600", color: "#fafafa" }}>{toastMessage.senderName}</strong>
-             <span style={{ fontSize: "13px", color: "#a8a8a8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-               {toastMessage.text}
-             </span>
-          </div>
+          <div style={{ color: "#25D366", fontSize: "18px" }}>💬</div>
         </div>
       )}
     </div>
@@ -721,7 +732,7 @@ const globalStyles = `
 ::-webkit-scrollbar {
   display: none;
 }
-@keyframes slideDown {
+@keyframes notificationSlideDown {
   from { transform: translate(-50%, -100px); opacity: 0; }
   to { transform: translate(-50%, 0); opacity: 1; }
 }

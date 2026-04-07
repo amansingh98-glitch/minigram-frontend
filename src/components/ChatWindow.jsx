@@ -7,6 +7,7 @@ import {
   sendFileMessage,
   sendMessage,
   sendTypingStatus,
+  reactToMessage,
 } from "../services/chatService";
 import { getMyProfile } from "../services/userService";
 import { API_BASE_URL } from "../config";
@@ -20,6 +21,7 @@ const ChatWindow = ({ selectedUser, onMessageSent, isMobile, onBackClick }) => {
   const [typingText, setTypingText] = useState("");
   const [isOtherUserOnline, setIsOtherUserOnline] = useState(false);
   const [menuMessageId, setMenuMessageId] = useState(null);
+  const [replyToMessage, setReplyToMessage] = useState(null);
 
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -82,6 +84,7 @@ const ChatWindow = ({ selectedUser, onMessageSent, isMobile, onBackClick }) => {
     setMessageText("");
     setTypingText("");
     setMenuMessageId(null);
+    setReplyToMessage(null);
     setIsOtherUserOnline(!!selectedUser?.online);
 
     if (selectedUserId) {
@@ -149,8 +152,9 @@ const ChatWindow = ({ selectedUser, onMessageSent, isMobile, onBackClick }) => {
 
     try {
       setSending(true);
-      await sendMessage(selectedUserId, messageText.trim());
+      await sendMessage(selectedUserId, messageText.trim(), replyToMessage?.id);
       setMessageText("");
+      setReplyToMessage(null);
       await sendTypingStatus(selectedUserId, false);
 
       if (onMessageSent) {
@@ -163,6 +167,16 @@ const ChatWindow = ({ selectedUser, onMessageSent, isMobile, onBackClick }) => {
       alert("Message send failed");
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleReact = async (messageId, reaction) => {
+    try {
+      await reactToMessage(messageId, reaction);
+      setMenuMessageId(null);
+      await loadMessages();
+    } catch (error) {
+      console.error("Reaction error:", error);
     }
   };
 
@@ -366,7 +380,26 @@ const ChatWindow = ({ selectedUser, onMessageSent, isMobile, onBackClick }) => {
                     }}
                     style={{ cursor: "pointer" }}
                   >
+                    {message.replyToMessageId && (
+                        <div 
+                            className="quoted-message"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const element = document.getElementById(`post-${message.replyToMessageId}`);
+                                element?.scrollIntoView({ behavior: "smooth", block: "center" });
+                            }}
+                        >
+                            <strong>Replying to:</strong>
+                            <div>{message.replyToMessageText || "Message"}</div>
+                        </div>
+                    )}
                     {renderMessageBody(message)}
+
+                    {message.reaction && (
+                        <div className="reaction-badge">
+                            {message.reaction}
+                        </div>
+                    )}
 
                     <div className="chat-meta">
                       <span>
@@ -429,6 +462,36 @@ const ChatWindow = ({ selectedUser, onMessageSent, isMobile, onBackClick }) => {
                           Delete for everyone
                         </button>
                       )}
+
+                      <button
+                        style={{
+                          width: "100%",
+                          border: "none",
+                          background: "transparent",
+                          textAlign: "left",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => {
+                            setReplyToMessage(message);
+                            setMenuMessageId(null);
+                        }}
+                      >
+                        Reply
+                      </button>
+
+                      <div className="reaction-menu">
+                        {['❤️', '👍', '😂', '😮', '😢', '🔥'].map(emoji => (
+                            <span 
+                                key={emoji} 
+                                className="reaction-option"
+                                onClick={() => handleReact(message.id, emoji)}
+                            >
+                                {emoji}
+                            </span>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -439,42 +502,52 @@ const ChatWindow = ({ selectedUser, onMessageSent, isMobile, onBackClick }) => {
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="chat-input-bar">
-          <input
-            ref={fileInputRef}
-            type="file"
-            style={{ display: "none" }}
-            onChange={handleFileSelect}
-          />
+        <div className="chat-input-bar-container">
+          {replyToMessage && (
+              <div className="reply-preview-bar">
+                  <div className="reply-preview-content">
+                    <strong>Replying to:</strong> {replyToMessage.messageText || "Attachment"}
+                  </div>
+                  <button className="reply-close-btn" onClick={() => setReplyToMessage(null)}>&times;</button>
+              </div>
+          )}
+          <div className="chat-input-bar">
+            <input
+              ref={fileInputRef}
+              type="file"
+              style={{ display: "none" }}
+              onChange={handleFileSelect}
+            />
 
-          <button
-            type="button"
-            className="chat-attach-btn"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            📎
-          </button>
+            <button
+              type="button"
+              className="chat-attach-btn"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              📎
+            </button>
 
-          <input
-            className="chat-input"
-            type="text"
-            placeholder={`Message ${selectedUser.username}...`}
-            value={messageText}
-            onChange={(e) => handleTypingChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleSendMessage();
-              }
-            }}
-          />
+            <input
+              className="chat-input"
+              type="text"
+              placeholder={`Message ${selectedUser.username}...`}
+              value={messageText}
+              onChange={(e) => handleTypingChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSendMessage();
+                }
+              }}
+            />
 
-          <button
-            className="chat-send-btn"
-            onClick={handleSendMessage}
-            disabled={sending}
-          >
-            {sending ? "..." : "Send"}
-          </button>
+            <button
+              className="chat-send-btn"
+              onClick={handleSendMessage}
+              disabled={sending}
+            >
+              {sending ? "..." : "Send"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

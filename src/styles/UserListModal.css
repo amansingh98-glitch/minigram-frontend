@@ -1,0 +1,97 @@
+.user-list-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.user-list-modal-content {
+    background-color: #fff;
+    width: 400px;
+    max-width: 90%;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    max-height: 500px;
+}
+
+.user-list-modal-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #dbdbdb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-list-modal-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #262626;
+}
+
+.user-list-modal-body {
+    padding: 8px 0;
+    overflow-y: auto;
+}
+
+.user-list-item {
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+}
+
+.user-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 12px;
+}
+
+.username {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.follow-btn {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    background-color: #0095f6;
+    color: white;
+}
+
+.follow-btn.following {
+    background-color: #efefef;
+    color: #262626;
+}
+
+.no-users {
+    padding: 40px;
+    text-align: center;
+    color: #8e8e8e;
+}

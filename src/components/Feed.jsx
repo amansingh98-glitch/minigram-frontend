@@ -4,9 +4,12 @@ import {
   deleteComment,
   deletePost,
 } from "../services/postService";
-import { toggleLike } from "../services/likeService";
+import { toggleLike, getLikes } from "../services/likeService";
+import { toggleFollow } from "../services/followService";
 
 import CommentModal from "./CommentModal";
+import UserListModal from "./UserListModal";
+import "../styles/UserListModal.css";
 
 const Feed = ({
   posts = [],
@@ -22,6 +25,11 @@ const Feed = ({
   const [activeDropdownPostId, setActiveDropdownPostId] = useState(null);
   const [localPosts, setLocalPosts] = useState(posts);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  const [isUserListOpen, setIsUserListOpen] = useState(false);
+  const [userListTitle, setUserListTitle] = useState("");
+  const [userListData, setUserListData] = useState([]);
+  const [listLoading, setListLoading] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -117,6 +125,20 @@ const Feed = ({
       alert("Failed to delete comment");
     } finally {
       setDeleteCommentLoading((prev) => ({ ...prev, [commentId]: false }));
+    }
+  };
+
+  const handleShowLikes = async (postId) => {
+    try {
+      setListLoading(true);
+      setUserListTitle("Likes");
+      setIsUserListOpen(true);
+      const data = await getLikes(postId);
+      setUserListData(data);
+    } catch (error) {
+      console.error("Fetch likes error:", error);
+    } finally {
+      setListLoading(false);
     }
   };
 
@@ -297,9 +319,24 @@ const Feed = ({
                   {likeLoading[post.id]
                     ? "..."
                     : post.likedByCurrentUser
-                    ? `❤️ ${post.likeCount || 0}`
-                    : `🤍 ${post.likeCount || 0}`}
+                    ? "❤️"
+                    : "🤍"}
                 </button>
+                {post.likeCount > 0 && (
+                  <span 
+                    style={{ 
+                      cursor: "pointer", 
+                      fontSize: "14px", 
+                      fontWeight: "600", 
+                      color: "#374151",
+                      alignSelf: "center",
+                      marginLeft: "4px"
+                    }}
+                    onClick={() => handleShowLikes(post.id)}
+                  >
+                    {post.likeCount} {post.likeCount === 1 ? 'like' : 'likes'}
+                  </span>
+                )}
 
                 <button
                   style={{
@@ -325,6 +362,20 @@ const Feed = ({
           </div>
         );
       })}
+
+      <UserListModal 
+        isOpen={isUserListOpen}
+        onClose={() => setIsUserListOpen(false)}
+        title={userListTitle}
+        users={userListData}
+        onToggleFollow={async (id) => {
+            await toggleFollow(id);
+            // We don't have a specific post ID here easily available without more state, 
+            // but we can refresh the list by re-fetching if we store the current active post ID
+            // For now, let's just update the local state of the user in the list
+            setUserListData(prev => prev.map(u => u.id === id ? {...u, followedByCurrentUser: !u.followedByCurrentUser} : u));
+        }}
+      />
     </div>
   );
 };
