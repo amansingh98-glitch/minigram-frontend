@@ -1,23 +1,32 @@
 import React, { useEffect, useState } from "react";
 import { changePassword, deleteAccount } from "../services/userService";
+import {
+  sendForgotPasswordOtp,
+  resetPasswordWithOtp,
+} from "../services/authService";
 
-const SettingsPage = ({
-  onOpenProfile,
-  onOpenForgotPassword,
-  onLogout,
-}) => {
+const SettingsPage = ({ onOpenProfile, onLogout }) => {
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
+  // States for Password Change
   const [oldPassword, setOldPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [newPass, setNewPass] = useState("");
+  const [confirmPass, setConfirmPass] = useState("");
 
-  const [deletePassword, setDeletePassword] = useState("");
+  // States for Account Deletion
+  const [deletePass, setDeletePass] = useState("");
 
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  // States for Forgot Password (Internal)
+  const [forgotEmail, setForgotEmail] = useState(
+    localStorage.getItem("userEmail") || ""
+  );
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [resetPass, setResetPass] = useState("");
 
+  const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
@@ -26,297 +35,290 @@ const SettingsPage = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const resetChangePasswordForm = () => {
-    setOldPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-  };
-
-  const resetDeleteForm = () => {
-    setDeletePassword("");
-  };
-
-  const handleCloseChangePasswordModal = () => {
-    resetChangePasswordForm();
-    setShowChangePassword(false);
-  };
-
-  const handleCloseDeleteModal = () => {
-    resetDeleteForm();
-    setShowDeleteAccount(false);
-  };
-
-  const handleChangePassword = async () => {
-    if (!oldPassword || !newPassword || !confirmPassword) {
+  const handleUpdatePassword = async () => {
+    if (!oldPassword || !newPass || !confirmPass) {
       alert("Please fill all fields");
       return;
     }
-
-    if (newPassword !== confirmPassword) {
-      alert("New password and confirm password do not match");
+    if (newPass !== confirmPass) {
+      alert("Passwords do not match");
       return;
     }
-
-    if (newPassword.length < 6) {
-      alert("New password must be at least 6 characters");
-      return;
-    }
-
     try {
-      setSaving(true);
-      const msg = await changePassword(oldPassword, newPassword);
+      setLoading(true);
+      const msg = await changePassword(oldPassword, newPass);
       alert(msg || "Password updated successfully");
-      handleCloseChangePasswordModal();
+      setShowChangePassword(false);
+      setOldPassword("");
+      setNewPass("");
+      setConfirmPass("");
     } catch (error) {
-      console.error("Change password error:", error);
-      alert(error.message || "Failed to change password");
+      alert(error.message);
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (!deletePassword) {
-      alert("Please enter your password");
+  const handleSendOtpInternal = async () => {
+    if (!forgotEmail) {
+      alert("Email is required");
       return;
     }
-
-    const confirmDelete = window.confirm(
-      "Are you sure you want to permanently delete your account?"
-    );
-
-    if (!confirmDelete) return;
-
     try {
-      setDeleting(true);
-      const msg = await deleteAccount(deletePassword);
-      alert(msg || "Account deleted successfully");
+      setLoading(true);
+      const msg = await sendForgotPasswordOtp(forgotEmail);
+      alert(msg);
+      setOtpSent(true);
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      localStorage.removeItem("token");
-      localStorage.removeItem("userEmail");
-      localStorage.removeItem("username");
-      localStorage.removeItem("userName");
-      localStorage.removeItem("name");
-      localStorage.removeItem("profileImageUrl");
+  const handleResetPasswordInternal = async () => {
+    if (!otp || !resetPass) {
+      alert("Please enter OTP and New Password");
+      return;
+    }
+    try {
+      setLoading(true);
+      const msg = await resetPasswordWithOtp({
+        email: forgotEmail,
+        otp,
+        newPassword: resetPass,
+      });
+      alert(msg);
+      setShowForgotPassword(false);
+      setOtpSent(false);
+      setOtp("");
+      setResetPass("");
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  const handleDelete = async () => {
+    if (!deletePass) {
+      alert("Enter password to confirm");
+      return;
+    }
+    if (!window.confirm("Are you sure? This cannot be undone.")) return;
+    try {
+      setLoading(true);
+      await deleteAccount(deletePass);
       onLogout();
     } catch (error) {
-      console.error("Delete account error:", error);
-      alert(error.message || "Failed to delete account");
+      alert(error.message);
     } finally {
-      setDeleting(false);
+      setLoading(false);
     }
+  };
+
+  const renderModal = (title, isOpen, onClose, content) => {
+    if (!isOpen) return null;
+    return (
+      <div style={styles.modalOverlay} onClick={onClose}>
+        <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <h3 style={styles.modalTitle}>{title}</h3>
+          {content}
+          <div style={styles.modalActions}>
+            <button
+              style={styles.cancelBtn}
+              onClick={onClose}
+              disabled={loading}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
-    <div style={styles.wrapper}>
-      <div
-        style={{
-          ...styles.headerCard,
-          padding: isMobile ? "16px" : "24px",
-          borderRadius: isMobile ? "18px" : "24px",
-        }}
-      >
-        <h2
-          style={{
-            ...styles.title,
-            fontSize: isMobile ? "22px" : "28px",
-          }}
-        >
-          Settings
-        </h2>
-        <p style={styles.subtitle}>
-          Manage your account, profile and security settings.
-        </p>
-      </div>
+    <div style={styles.container}>
+      <header style={styles.header}>
+        <h1 style={styles.mainTitle}>Settings</h1>
+        <p style={styles.subtitle}>Fine-tune your MiniGram experience</p>
+      </header>
 
-      <div
-        style={{
-          ...styles.grid,
-          gridTemplateColumns: isMobile
-            ? "1fr"
-            : "repeat(auto-fit, minmax(260px, 1fr))",
-          gap: isMobile ? "12px" : "16px",
-        }}
-      >
-        <div style={styles.card}>
-          <div style={styles.cardTitle}>Edit Profile</div>
-          <div style={styles.cardText}>
-            Update your username, bio and profile photo.
+      <section style={styles.sectionGrid(isMobile)}>
+        <div style={styles.glassCard} className="settings-card">
+          <div style={styles.cardHeader}>
+            <span style={styles.icon}>👤</span>
+            <h2 style={styles.cardTitle}>Profile</h2>
           </div>
-          <button style={styles.primaryBtn} onClick={onOpenProfile}>
-            Open Profile
+          <p style={styles.cardDesc}>Personalize your identity on the platform.</p>
+          <button style={styles.actionBtn} onClick={onOpenProfile}>
+            Edit Profile
           </button>
         </div>
 
-        <div style={styles.card}>
-          <div style={styles.cardTitle}>Change Password</div>
-          <div style={styles.cardText}>
-            Change your current password to keep your account secure.
+        <div style={styles.glassCard} className="settings-card">
+          <div style={styles.cardHeader}>
+            <span style={styles.icon}>🔐</span>
+            <h2 style={styles.cardTitle}>Security</h2>
           </div>
+          <p style={styles.cardDesc}>Maintain a strong and secure account.</p>
+          <div style={styles.buttonStack}>
+            <button
+              style={styles.actionBtn}
+              onClick={() => setShowChangePassword(true)}
+            >
+              Change Password
+            </button>
+            <button
+              style={styles.ghostBtn}
+              onClick={() => setShowForgotPassword(true)}
+            >
+              Forgot Password?
+            </button>
+          </div>
+        </div>
+
+        <div style={styles.glassCard} className="settings-card">
+          <div style={styles.cardHeader}>
+            <span style={styles.icon}>🚪</span>
+            <h2 style={styles.cardTitle}>Session</h2>
+          </div>
+          <p style={styles.cardDesc}>Sign out from this browser safely.</p>
           <button
-            style={styles.primaryBtn}
-            onClick={() => setShowChangePassword(true)}
+            style={{ ...styles.actionBtn, background: "#6366f1" }}
+            onClick={onLogout}
           >
-            Change Password
+            Log Out
           </button>
         </div>
 
-        <div style={styles.card}>
-          <div style={styles.cardTitle}>Forgot Password</div>
-          <div style={styles.cardText}>
-            Reset password using OTP on your registered email.
+        <div style={{ ...styles.glassCard, ...styles.dangerCard }} className="settings-card">
+          <div style={styles.cardHeader}>
+            <span style={styles.icon}>⚠️</span>
+            <h2 style={{ ...styles.cardTitle, color: "#ef4444" }}>Zone</h2>
           </div>
-          <button style={styles.secondaryBtn} onClick={onOpenForgotPassword}>
-            Forgot Password
-          </button>
-        </div>
-
-        <div style={styles.card}>
-          <div style={styles.cardTitle}>Logout</div>
-          <div style={styles.cardText}>
-            Sign out from your current MiniGram session.
-          </div>
-          <button style={styles.secondaryBtn} onClick={onLogout}>
-            Logout
-          </button>
-        </div>
-
-        <div style={{ ...styles.card, ...styles.dangerCard }}>
-          <div style={styles.cardTitle}>Delete Account</div>
-          <div style={styles.cardText}>
-            Permanently delete your account and related data.
-          </div>
+          <p style={styles.cardDesc}>Irreversible account deletion request.</p>
           <button
-            style={styles.dangerBtn}
+            style={{ ...styles.actionBtn, background: "#ef4444" }}
             onClick={() => setShowDeleteAccount(true)}
           >
             Delete Account
           </button>
         </div>
-      </div>
+      </section>
 
-      {showChangePassword && (
-        <div style={styles.modalOverlay}>
-          <div
-            style={{
-              ...styles.modalCard,
-              width: isMobile ? "92%" : "420px",
-              padding: isMobile ? "16px" : "20px",
-            }}
+      {/* Change Password Modal */}
+      {renderModal(
+        "Update Security",
+        showChangePassword,
+        () => setShowChangePassword(false),
+        <div style={styles.form}>
+          <input
+            type="password"
+            placeholder="Current Password"
+            style={styles.input}
+            value={oldPassword}
+            onChange={(e) => setOldPassword(e.target.value)}
+          />
+          <input
+            type="password"
+            placeholder="New Password"
+            style={styles.input}
+            value={newPass}
+            onChange={(e) => setNewPass(e.target.value)}
+          />
+          <input
+            type="password"
+            placeholder="Confirm Pass"
+            style={styles.input}
+            value={confirmPass}
+            onChange={(e) => setConfirmPass(e.target.value)}
+          />
+          <button
+            style={styles.primaryBtn}
+            onClick={handleUpdatePassword}
+            disabled={loading}
           >
-            <h3 style={styles.modalTitle}>Change Password</h3>
-
-            <input
-              type="password"
-              placeholder="Enter old password"
-              value={oldPassword}
-              onChange={(e) => setOldPassword(e.target.value)}
-              style={styles.input}
-            />
-
-            <input
-              type="password"
-              placeholder="Enter new password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              style={styles.input}
-            />
-
-            <input
-              type="password"
-              placeholder="Confirm new password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              style={styles.input}
-            />
-
-            <div
-              style={{
-                ...styles.modalActions,
-                flexDirection: isMobile ? "column" : "row",
-              }}
-            >
-              <button
-                style={{
-                  ...styles.primaryBtn,
-                  width: isMobile ? "100%" : "auto",
-                }}
-                onClick={handleChangePassword}
-                disabled={saving}
-              >
-                {saving ? "Saving..." : "Update Password"}
-              </button>
-
-              <button
-                style={{
-                  ...styles.secondaryBtn,
-                  width: isMobile ? "100%" : "auto",
-                }}
-                onClick={handleCloseChangePasswordModal}
-                disabled={saving}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+            {loading ? "Updating..." : "Update Password"}
+          </button>
         </div>
       )}
 
-      {showDeleteAccount && (
-        <div style={styles.modalOverlay}>
-          <div
-            style={{
-              ...styles.modalCard,
-              width: isMobile ? "92%" : "420px",
-              padding: isMobile ? "16px" : "20px",
-            }}
-          >
-            <h3 style={{ ...styles.modalTitle, color: "#dc2626" }}>
-              Delete Account
-            </h3>
-
-            <p style={styles.deleteWarning}>
-              This action is permanent. Enter your password to continue.
-            </p>
-
-            <input
-              type="password"
-              placeholder="Enter your password"
-              value={deletePassword}
-              onChange={(e) => setDeletePassword(e.target.value)}
-              style={styles.input}
-            />
-
-            <div
-              style={{
-                ...styles.modalActions,
-                flexDirection: isMobile ? "column" : "row",
-              }}
+      {/* Forgot Password Modal */}
+      {renderModal(
+        "Recover Account",
+        showForgotPassword,
+        () => setShowForgotPassword(false),
+        <div style={styles.form}>
+          <input
+            type="email"
+            placeholder="Registered Email"
+            style={styles.input}
+            value={forgotEmail}
+            onChange={(e) => setForgotEmail(e.target.value)}
+          />
+          {otpSent && (
+            <>
+              <input
+                type="text"
+                placeholder="6-Digit OTP"
+                style={styles.input}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+              />
+              <input
+                type="password"
+                placeholder="New Password"
+                style={styles.input}
+                value={resetPass}
+                onChange={(e) => setResetPass(e.target.value)}
+              />
+            </>
+          )}
+          {!otpSent ? (
+            <button
+              style={styles.primaryBtn}
+              onClick={handleSendOtpInternal}
+              disabled={loading}
             >
-              <button
-                style={{
-                  ...styles.dangerBtn,
-                  width: isMobile ? "100%" : "auto",
-                }}
-                onClick={handleDeleteAccount}
-                disabled={deleting}
-              >
-                {deleting ? "Deleting..." : "Delete Permanently"}
-              </button>
+              {loading ? "Sending..." : "Send OTP"}
+            </button>
+          ) : (
+            <button
+              style={styles.primaryBtn}
+              onClick={handleResetPasswordInternal}
+              disabled={loading}
+            >
+              {loading ? "Resetting..." : "Confirm Reset"}
+            </button>
+          )}
+        </div>
+      )}
 
-              <button
-                style={{
-                  ...styles.secondaryBtn,
-                  width: isMobile ? "100%" : "auto",
-                }}
-                onClick={handleCloseDeleteModal}
-                disabled={deleting}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+      {/* Delete Account Modal */}
+      {renderModal(
+        "Final Warning",
+        showDeleteAccount,
+        () => setShowDeleteAccount(false),
+        <div style={styles.form}>
+          <p style={{ color: "#6b7280", fontSize: "14px", marginBottom: "10px" }}>
+            To confirm deletion, please enter your password.
+          </p>
+          <input
+            type="password"
+            placeholder="Enter Password"
+            style={styles.input}
+            value={deletePass}
+            onChange={(e) => setDeletePass(e.target.value)}
+          />
+          <button
+            style={{ ...styles.primaryBtn, background: "#ef4444" }}
+            onClick={handleDelete}
+            disabled={loading}
+          >
+            {loading ? "Processing..." : "Confirm Deletion"}
+          </button>
         </div>
       )}
     </div>
@@ -324,143 +326,159 @@ const SettingsPage = ({
 };
 
 const styles = {
-  wrapper: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "18px",
+  container: {
+    padding: "10px",
     width: "100%",
+    maxWidth: "1100px",
+    margin: "0 auto",
   },
-
-  headerCard: {
-    background: "#ffffff",
-    border: "1px solid #e5e7eb",
+  header: {
+    marginBottom: "30px",
   },
-
-  title: {
-    margin: 0,
-    fontWeight: "700",
+  mainTitle: {
+    fontSize: "32px",
+    fontWeight: "800",
     color: "#1f2937",
+    margin: 0,
+    letterSpacing: "-0.5px",
   },
-
   subtitle: {
-    margin: "8px 0 0 0",
     color: "#6b7280",
-    fontSize: "14px",
-    lineHeight: "1.5",
+    fontSize: "16px",
+    marginTop: "5px",
   },
-
-  grid: {
+  sectionGrid: (isMobile) => ({
     display: "grid",
-  },
-
-  card: {
-    background: "#ffffff",
-    border: "1px solid #e5e7eb",
-    borderRadius: "18px",
-    padding: "18px",
+    gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(240px, 1fr))",
+    gap: "20px",
+  }),
+  glassCard: {
+    background: "rgba(255, 255, 255, 0.7)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    border: "1px solid rgba(255, 255, 255, 0.2)",
+    borderRadius: "24px",
+    padding: "24px",
+    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.05)",
+    transition: "transform 0.2s ease, box-shadow 0.2s ease",
     display: "flex",
     flexDirection: "column",
+    gap: "15px",
+  },
+  dangerCard: {
+    background: "rgba(255, 241, 242, 0.5)",
+    border: "1px solid rgba(254, 202, 202, 0.5)",
+  },
+  cardHeader: {
+    display: "flex",
+    alignItems: "center",
     gap: "12px",
   },
-
-  dangerCard: {
-    border: "1px solid #fecaca",
-    background: "#fffafa",
+  icon: {
+    fontSize: "24px",
   },
-
   cardTitle: {
-    fontSize: "18px",
+    fontSize: "20px",
     fontWeight: "700",
     color: "#1f2937",
+    margin: 0,
   },
-
-  cardText: {
-    fontSize: "14px",
+  cardDesc: {
     color: "#6b7280",
+    fontSize: "14px",
     lineHeight: "1.5",
-    wordBreak: "break-word",
+    margin: 0,
   },
-
-  primaryBtn: {
+  buttonStack: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+  },
+  actionBtn: {
+    width: "100%",
+    padding: "12px",
+    borderRadius: "14px",
     border: "none",
     background: "#2563eb",
-    color: "#ffffff",
-    padding: "12px 16px",
-    borderRadius: "14px",
-    cursor: "pointer",
+    color: "#fff",
     fontWeight: "700",
-  },
-
-  secondaryBtn: {
-    border: "1px solid #d1d5db",
-    background: "#ffffff",
-    color: "#374151",
-    padding: "12px 16px",
-    borderRadius: "14px",
+    fontSize: "14px",
     cursor: "pointer",
-    fontWeight: "700",
+    transition: "opacity 0.2s ease",
   },
-
-  dangerBtn: {
+  ghostBtn: {
+    background: "transparent",
     border: "none",
-    background: "#dc2626",
-    color: "#ffffff",
-    padding: "12px 16px",
-    borderRadius: "14px",
+    color: "#4b5563",
+    fontSize: "13px",
+    fontWeight: "600",
     cursor: "pointer",
-    fontWeight: "700",
+    textDecoration: "underline",
   },
-
   modalOverlay: {
     position: "fixed",
     inset: 0,
-    background: "rgba(0,0,0,0.45)",
+    background: "rgba(0, 0, 0, 0.4)",
+    backdropFilter: "blur(4px)",
+    zIndex: 1000,
     display: "flex",
-    alignItems: "center",
     justifyContent: "center",
-    zIndex: 2000,
-    padding: "16px",
+    alignItems: "center",
+    padding: "20px",
   },
-
-  modalCard: {
-    background: "#ffffff",
-    borderRadius: "20px",
+  modalContent: {
+    background: "#fff",
+    borderRadius: "28px",
+    width: "100%",
+    maxWidth: "400px",
+    padding: "30px",
+    boxShadow: "0 25px 50px rgba(0,0,0,0.15)",
+  },
+  modalTitle: {
+    fontSize: "22px",
+    fontWeight: "800",
+    color: "#1f2937",
+    marginBottom: "20px",
+    textAlign: "center",
+  },
+  form: {
     display: "flex",
     flexDirection: "column",
     gap: "12px",
-    border: "1px solid #e5e7eb",
-    boxShadow: "0 20px 50px rgba(0,0,0,0.12)",
-    boxSizing: "border-box",
   },
-
-  modalTitle: {
-    margin: 0,
-    fontSize: "22px",
-    color: "#1f2937",
-  },
-
-  deleteWarning: {
-    margin: 0,
-    fontSize: "14px",
-    color: "#6b7280",
-    lineHeight: "1.5",
-  },
-
   input: {
-    width: "100%",
-    padding: "12px 14px",
-    border: "1px solid #d1d5db",
-    borderRadius: "12px",
-    fontSize: "14px",
+    padding: "14px",
+    borderRadius: "14px",
+    border: "1px solid #e5e7eb",
+    background: "#f9fafb",
+    fontSize: "15px",
     outline: "none",
-    boxSizing: "border-box",
+    transition: "border-color 0.2s ease",
   },
-
+  primaryBtn: {
+    padding: "14px",
+    borderRadius: "14px",
+    border: "none",
+    background: "#2563eb",
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: "16px",
+    cursor: "pointer",
+    marginTop: "5px",
+  },
+  cancelBtn: {
+    width: "100%",
+    background: "transparent",
+    border: "none",
+    color: "#6b7280",
+    marginTop: "15px",
+    fontSize: "14px",
+    fontWeight: "600",
+    cursor: "pointer",
+  },
   modalActions: {
-    display: "flex",
-    gap: "10px",
-    marginTop: "6px",
-  },
+    marginTop: "5px",
+  }
 };
 
 export default SettingsPage;

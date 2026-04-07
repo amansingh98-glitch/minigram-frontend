@@ -302,7 +302,12 @@ const HomePage = ({ onLogout }) => {
     }
 
     if (activePage === "settings") {
-      return <SettingsPage onLogout={onLogout} />;
+      return (
+        <SettingsPage
+          onLogout={onLogout}
+          onOpenProfile={handleOpenMyProfile}
+        />
+      );
     }
 
     if (activePage === "reels") {

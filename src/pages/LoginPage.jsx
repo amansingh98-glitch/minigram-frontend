@@ -107,76 +107,78 @@ function LoginPage({ onSwitchToRegister, onLoginSuccess }) {
   if (forgotMode) {
     return (
       <div style={styles.container}>
-        <div style={styles.card}>
+        <div style={styles.glassCard}>
           <div style={styles.brand}>
             <h1 style={styles.title}>MiniGram</h1>
-            <p style={styles.subtitle}>Reset your password</p>
+            <p style={styles.subtitle}>Account Recovery</p>
           </div>
 
-          <div style={styles.inputGroup}>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              style={styles.input}
-              value={forgotEmail}
-              onChange={(e) => setForgotEmail(e.target.value)}
-            />
-          </div>
-
-          {otpSent && (
-            <>
-              <div style={styles.inputGroup}>
-                <input
-                  type="text"
-                  placeholder="Enter OTP"
-                  style={styles.input}
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                />
-              </div>
-
-              <div style={styles.inputGroup}>
-                <input
-                  type="password"
-                  placeholder="Enter new password"
-                  style={styles.input}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                />
-              </div>
-            </>
-          )}
-
-          {!otpSent ? (
-            <button style={styles.button} onClick={handleSendOtp}>
-              Send OTP
-            </button>
-          ) : (
-            <button style={styles.button} onClick={handleResetPassword}>
-              Reset Password
-            </button>
-          )}
-
-          {message && (
-            <div style={isError ? styles.messageError : styles.messageSuccess}>
-              {message}
+          <div style={styles.formContent}>
+            <div style={styles.inputWrapper}>
+              <input
+                type="email"
+                placeholder="Confirmation Email"
+                style={styles.premiumInput}
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+              />
             </div>
-          )}
 
-          <p
-            style={styles.switchText}
-            onClick={() => {
-              setForgotMode(false);
-              setOtpSent(false);
-              setMessage("");
-              setForgotEmail("");
-              setOtp("");
-              setNewPassword("");
-              setIsError(false);
-            }}
-          >
-            Back to Login
-          </p>
+            {otpSent && (
+              <div style={styles.otpSection}>
+                <div style={styles.inputWrapper}>
+                  <input
+                    type="text"
+                    placeholder="Enter 6-Digit OTP"
+                    style={styles.premiumInput}
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                  />
+                </div>
+
+                <div style={styles.inputWrapper}>
+                  <input
+                    type="password"
+                    placeholder="New Secure Password"
+                    style={styles.premiumInput}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+
+            {!otpSent ? (
+              <button style={styles.premiumButton} onClick={handleSendOtp}>
+                Send Verification OTP
+              </button>
+            ) : (
+              <button style={styles.premiumButton} onClick={handleResetPassword}>
+                Update Password
+              </button>
+            )}
+
+            {message && (
+              <div style={isError ? styles.toastError : styles.toastSuccess}>
+                {message}
+              </div>
+            )}
+
+            <p
+              style={styles.backLink}
+              onClick={() => {
+                setForgotMode(false);
+                setOtpSent(false);
+                setMessage("");
+                setForgotEmail("");
+                setOtp("");
+                setNewPassword("");
+                setIsError(false);
+              }}
+            >
+              ← Back to login
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -214,85 +216,84 @@ const styles = {
       "linear-gradient(135deg, #f5f7ff 0%, #eef2ff 45%, #f8fafc 100%)",
     padding: "20px",
   },
-  card: {
+  glassCard: {
     width: "100%",
     maxWidth: "420px",
-    background: "#ffffff",
-    padding: "35px 30px",
-    borderRadius: "24px",
-    boxShadow: "0 20px 50px rgba(37, 99, 235, 0.10)",
-    border: "1px solid #e5e7eb",
+    background: "rgba(255, 255, 255, 0.8)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    padding: "40px 35px",
+    borderRadius: "28px",
+    boxShadow: "0 25px 60px rgba(37, 99, 235, 0.12)",
+    border: "1px solid rgba(255, 255, 255, 0.3)",
   },
-  brand: {
-    textAlign: "center",
-    marginBottom: "28px",
+  formContent: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "18px",
   },
-  title: {
-    fontSize: "48px",
-    fontWeight: "800",
-    margin: "0 0 8px 0",
-    color: "#111827",
-    letterSpacing: "-1px",
-  },
-  subtitle: {
-    margin: 0,
-    color: "#6b7280",
-    fontSize: "16px",
-  },
-  inputGroup: {
-    marginBottom: "16px",
-  },
-  input: {
+  inputWrapper: {
     width: "100%",
-    padding: "14px 16px",
-    border: "1px solid #d1d5db",
-    borderRadius: "14px",
+  },
+  premiumInput: {
+    width: "100%",
+    padding: "16px",
+    border: "1px solid #e5e7eb",
+    borderRadius: "16px",
     fontSize: "15px",
     outline: "none",
     boxSizing: "border-box",
     background: "#f9fafb",
+    transition: "all 0.2s ease",
   },
-  button: {
+  otpSection: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px",
+  },
+  premiumButton: {
     width: "100%",
-    padding: "14px",
+    padding: "16px",
     border: "none",
-    borderRadius: "14px",
-    background: "linear-gradient(135deg, #2563eb, #3b82f6)",
+    borderRadius: "16px",
+    background: "linear-gradient(135deg, #2563eb, #4f46e5)",
     color: "white",
-    fontSize: "17px",
+    fontSize: "16px",
     fontWeight: "700",
     cursor: "pointer",
-    marginTop: "10px",
-    boxShadow: "0 10px 20px rgba(37, 99, 235, 0.20)",
+    margin: "10px 0",
+    boxShadow: "0 10px 20px rgba(37, 99, 235, 0.25)",
+    transition: "transform 0.2s ease",
   },
-  messageSuccess: {
-    marginTop: "18px",
-    padding: "12px",
-    borderRadius: "12px",
-    background: "#ecfdf5",
-    color: "#047857",
+  toastSuccess: {
+    padding: "14px",
+    borderRadius: "14px",
+    background: "#f0fdf4",
+    color: "#166534",
     fontWeight: "600",
+    fontSize: "14px",
     textAlign: "center",
-    border: "1px solid #a7f3d0",
+    border: "1px solid #bbf7d0",
   },
-  messageError: {
-    marginTop: "18px",
-    padding: "12px",
-    borderRadius: "12px",
+  toastError: {
+    padding: "14px",
+    borderRadius: "14px",
     background: "#fef2f2",
-    color: "#dc2626",
+    color: "#991b1b",
     fontWeight: "600",
+    fontSize: "14px",
     textAlign: "center",
     border: "1px solid #fecaca",
   },
-  switchText: {
-    marginTop: "18px",
+  backLink: {
     textAlign: "center",
-    color: "#2563eb",
+    color: "#6b7280",
     cursor: "pointer",
     fontWeight: "600",
     fontSize: "14px",
-  },
+    marginTop: "10px",
+    transition: "color 0.2s ease",
+  }
 };
 
 export default LoginPage;
