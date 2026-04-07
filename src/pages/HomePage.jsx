@@ -41,53 +41,31 @@ const HomePage = ({ onLogout }) => {
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     const handleDocClick = () => setShowNotifications(false);
-
     window.addEventListener("resize", handleResize);
     document.addEventListener("click", handleDocClick);
-
     return () => {
       window.removeEventListener("resize", handleResize);
       document.removeEventListener("click", handleDocClick);
     };
   }, []);
 
-  const currentUserName =
-    currentProfile?.username ||
-    localStorage.getItem("username") ||
-    localStorage.getItem("userName") ||
-    localStorage.getItem("name") ||
-    "User";
-
-  const currentUserImage = resolveMediaUrl(
-    currentProfile?.profileImageUrl ||
-      localStorage.getItem("profileImageUrl") ||
-      ""
-  );
-
-  const currentUserInitial = currentUserName
-    ? currentUserName.charAt(0).toUpperCase()
-    : "U";
+  const currentUserName = currentProfile?.username || localStorage.getItem("username") || "User";
+  const currentUserImage = resolveMediaUrl(currentProfile?.profileImageUrl || localStorage.getItem("profileImageUrl") || "");
+  const currentUserInitial = currentUserName.charAt(0).toUpperCase();
 
   const loadPosts = async () => {
     try {
       setLoading(true);
-      setMessage("");
-
       const data = await getAllPosts();
-      const normalizedPosts = Array.isArray(data)
-        ? data.map((post) => ({
-            ...post,
-            imageUrl: resolveMediaUrl(post.imageUrl),
-            videoUrl: resolveMediaUrl(post.videoUrl),
-            profileImageUrl: resolveMediaUrl(post.profileImageUrl),
-          }))
-        : [];
-
-      setPosts(normalizedPosts);
+      setPosts(Array.isArray(data) ? data.map(p => ({
+        ...p,
+        imageUrl: resolveMediaUrl(p.imageUrl),
+        videoUrl: resolveMediaUrl(p.videoUrl),
+        profileImageUrl: resolveMediaUrl(p.profileImageUrl),
+      })) : []);
     } catch (error) {
-      console.error("Error loading posts:", error);
+      console.error(error);
       setPosts([]);
-      setMessage("Failed to load posts");
     } finally {
       setLoading(false);
     }
@@ -96,42 +74,14 @@ const HomePage = ({ onLogout }) => {
   const loadMyProfile = async () => {
     try {
       const data = await getMyProfile();
-
-      const normalizedProfile = data
-        ? {
-            ...data,
-            profileImageUrl: resolveMediaUrl(data.profileImageUrl),
-            posts: Array.isArray(data.posts)
-              ? data.posts.map((post) => ({
-                  ...post,
-                  imageUrl: resolveMediaUrl(post.imageUrl),
-                  videoUrl: resolveMediaUrl(post.videoUrl),
-                }))
-              : [],
-          }
-        : null;
-
-      setCurrentProfile(normalizedProfile);
-
-      if (normalizedProfile?.username) {
-        localStorage.setItem("username", normalizedProfile.username);
-      }
-
-      if (normalizedProfile?.profileImageUrl) {
-        localStorage.setItem("profileImageUrl", normalizedProfile.profileImageUrl);
+      if (data) {
+        setCurrentProfile({
+          ...data,
+          profileImageUrl: resolveMediaUrl(data.profileImageUrl),
+        });
       }
     } catch (error) {
-      console.error("Error loading profile:", error);
-    }
-  };
-
-  const loadNotifications = async () => {
-    try {
-      const data = await getNotifications();
-      setNotifications(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Notification load error:", error);
-      setNotifications([]);
+      console.error(error);
     }
   };
 
@@ -140,7 +90,6 @@ const HomePage = ({ onLogout }) => {
       const count = await getUnreadNotificationCount();
       setUnreadCount(typeof count === "number" ? count : 0);
     } catch (error) {
-      console.error("Unread count error:", error);
       setUnreadCount(0);
     }
   };
@@ -149,17 +98,8 @@ const HomePage = ({ onLogout }) => {
     loadPosts();
     loadMyProfile();
     loadUnreadCount();
-
     setOnline().catch(console.error);
-
-    const handleBeforeUnload = () => {
-      setOffline().catch(console.error);
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
     return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
       setOffline().catch(console.error);
       disconnectGlobalSocket();
     };
@@ -168,13 +108,7 @@ const HomePage = ({ onLogout }) => {
   useEffect(() => {
     if (currentProfile?.id) {
       connectGlobalSocket(currentProfile.id, (payload) => {
-        if (
-          activePage === "messages" &&
-          selectedChatUser?.userId === payload.senderId
-        ) {
-          return; // Ignore if we are actively chatting with them
-        }
-        
+        if (activePage === "messages" && selectedChatUser?.userId === payload.senderId) return;
         if (payload.senderId !== currentProfile.id) {
            setToastMessage({
              senderName: payload.senderName || "Someone",
@@ -188,335 +122,132 @@ const HomePage = ({ onLogout }) => {
   }, [currentProfile, activePage, selectedChatUser]);
 
   const handleCreatePost = async () => {
-    if (!content.trim() && !selectedImage) {
-      setMessage("Post content or media required");
-      return;
-    }
-
+    if (!content.trim() && !selectedImage) return;
     try {
-      const responseMessage = await createPost(content, selectedImage);
-      setMessage(responseMessage || "Post created successfully");
+      await createPost(content, selectedImage);
       setContent("");
       setSelectedImage(null);
-
       await loadPosts();
-      await loadMyProfile();
-      await loadUnreadCount();
     } catch (error) {
-      console.error("Error creating post:", error);
-      setMessage("Failed to create post");
+      console.error(error);
     }
   };
 
-  const handleOpenMyProfile = () => {
-    setSelectedProfileUserId(null);
-    setActivePage("profile");
-  };
-
-  const handleOpenUserProfile = (userId) => {
-    setSelectedProfileUserId(userId);
-    setActivePage("profile");
-  };
-
+  const handleOpenMyProfile = () => { setActivePage("profile"); setSelectedProfileUserId(null); };
+  const handleOpenUserProfile = (userId) => { setActivePage("profile"); setSelectedProfileUserId(userId); };
   const handleOpenChat = (user) => {
-    setSelectedChatUser(
-      user
-        ? {
-            ...user,
-            profileImageUrl: resolveMediaUrl(user.profileImageUrl),
-          }
-        : null
-    );
+    setSelectedChatUser(user ? { ...user, profileImageUrl: resolveMediaUrl(user.profileImageUrl) } : null);
     setActivePage("messages");
   };
 
-  const handleNavigate = (pageKey) => {
-    if (pageKey === "explore") {
-      setActivePage("home");
-      return;
-    }
-
-    setActivePage(pageKey);
-
-    if (pageKey === "profile") {
-      setSelectedProfileUserId(null);
-    }
-  };
-
-  const handleBellClick = async (e) => {
-    e.stopPropagation();
-    const next = !showNotifications;
-    setShowNotifications(next);
-
-    if (next) {
-      await loadNotifications();
-      try {
-        await markNotificationsAsRead();
-        setUnreadCount(0);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-  };
-
-  const handleNotificationItemClick = (item) => {
-    setShowNotifications(false);
-    if (!item.referenceId) return;
-
-    handleNavigate("home");
-
-    setTimeout(() => {
-      const el = document.getElementById(`post-${item.referenceId}`);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-        el.style.transition = "background-color 0.5s ease";
-        el.style.backgroundColor = "#fef3c7";
-        setTimeout(() => {
-          el.style.backgroundColor = "";
-        }, 1500);
-      }
-    }, 300);
+  const handleNavigate = (page) => {
+    setActivePage(page === "explore" ? "home" : page);
+    if (page === "profile") setSelectedProfileUserId(null);
   };
 
   const renderPage = () => {
-    if (activePage === "messages") {
-      return <ChatPage initialSelectedUser={selectedChatUser} />;
-    }
-
-    if (activePage === "profile") {
-      return (
-        <ProfilePage
-          userId={selectedProfileUserId}
-          onMessageUser={handleOpenChat}
-        />
-      );
-    }
-
-    if (activePage === "search") {
-      return (
-        <SearchPage
-          onUserClick={handleOpenUserProfile}
-          onMessageUser={handleOpenChat}
-        />
-      );
-    }
-
-    if (activePage === "settings") {
-      return (
-        <SettingsPage
-          onLogout={onLogout}
-          onOpenProfile={handleOpenMyProfile}
-        />
-      );
-    }
-
-    if (activePage === "reels") {
-      return <ReelsPage posts={posts} onUpdate={loadPosts} />;
-    }
-
-    return (
-      <div style={styles.contentWrapper(isMobile)}>
-        <div style={styles.leftContent}>
-          <StoriesBar />
-
-          <PostComposer
-            content={content}
-            setContent={setContent}
-            selectedImage={selectedImage}
-            setSelectedImage={setSelectedImage}
-            onCreatePost={handleCreatePost}
-            message={message}
-          />
-
-          <Feed
-            posts={posts}
-            loading={loading}
-            onCommentAdded={loadPosts}
-            onUserClick={handleOpenUserProfile}
-            onMessageUser={handleOpenChat}
-          />
-        </div>
-
-        {!isMobile && (
-          <div style={styles.rightContent}>
-            <RightPanel
-              onUserClick={handleOpenUserProfile}
-              onMessageUser={handleOpenChat}
-            />
+    switch (activePage) {
+      case "messages": return <ChatPage initialSelectedUser={selectedChatUser} />;
+      case "profile": return <ProfilePage userId={selectedProfileUserId} onMessageUser={handleOpenChat} />;
+      case "search": return <SearchPage onUserClick={handleOpenUserProfile} onMessageUser={handleOpenChat} />;
+      case "settings": return <SettingsPage onLogout={onLogout} onOpenProfile={handleOpenMyProfile} />;
+      case "reels": return <ReelsPage posts={posts} onUpdate={loadPosts} />;
+      default:
+        return (
+          <div style={styles.mainFeedGrid(isMobile)}>
+            <div style={styles.leftCol}>
+              <StoriesBar />
+              <PostComposer
+                content={content}
+                setContent={setContent}
+                selectedImage={selectedImage}
+                setSelectedImage={setSelectedImage}
+                onCreatePost={handleCreatePost}
+              />
+              <Feed
+                posts={posts}
+                loading={loading}
+                onCommentAdded={loadPosts}
+                onUserClick={handleOpenUserProfile}
+                onMessageUser={handleOpenChat}
+              />
+            </div>
+            {!isMobile && (
+              <div style={styles.rightCol}>
+                <RightPanel onUserClick={handleOpenUserProfile} onMessageUser={handleOpenChat} />
+              </div>
+            )}
           </div>
-        )}
-      </div>
-    );
+        );
+    }
   };
 
   return (
-    <div style={styles.page}>
-      <style>{globalStyles}</style>
+    <div style={styles.appContainer}>
+      <style>{globalAnimations}</style>
+      
       {!isMobile && (
-        <Sidebar
-          onLogout={onLogout}
-          activePage={activePage}
-          onNavigate={handleNavigate}
-        />
+        <Sidebar onLogout={onLogout} activePage={activePage} onNavigate={handleNavigate} />
       )}
 
-      <div style={styles.mainArea(isMobile)}>
-        <div style={styles.topbar(isMobile)}>
-          <div style={styles.brandSection}>
-            <img src="/logo.png" alt="MiniGram Logo" style={styles.brandAvatar} />
-            <div>
-              <h1 style={styles.logo}>MiniGram</h1>
-              {!isMobile && <p style={styles.logoSub}>Connect and share</p>}
-            </div>
+      <div style={styles.contentArea(isMobile)}>
+        <nav style={styles.topNavbar(isMobile)}>
+          <div style={styles.logoBox}>
+            <div style={styles.logoCircle}>M</div>
+            <h1 style={styles.logoText}>MiniGram</h1>
           </div>
 
-          <div style={styles.topIcons}>
-            <div style={styles.currentUserBox}>
-              {currentUserImage ? (
-                <img
-                  src={currentUserImage}
-                  alt="User"
-                  style={styles.userNavbarImage}
-                />
-              ) : (
-                <div style={styles.userProfileAvatar}>{currentUserInitial}</div>
-              )}
-              {!isMobile && (
-                <span style={styles.userBadge}>{currentUserName}</span>
-              )}
+          <div style={styles.navIcons}>
+            <div style={styles.userCapsule}>
+               {currentUserImage ? (
+                 <img src={currentUserImage} style={styles.navAvatar} alt="me" />
+               ) : (
+                 <div style={styles.navInitial}>{currentUserInitial}</div>
+               )}
+               {!isMobile && <span style={styles.navUsername}>{currentUserName}</span>}
             </div>
 
-            <span
-              style={styles.topIcon}
-              onClick={() => setActivePage("messages")}
-              title="Messages"
-            >
-              ✉️
-            </span>
-
-            <div
-              style={styles.notificationWrap}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <span
-                style={styles.topIcon}
-                onClick={handleBellClick}
-                title="Notifications"
-              >
-                🔔
-              </span>
-
-              {unreadCount > 0 && (
-                <div style={styles.badge}>
-                  {unreadCount > 99 ? "99+" : unreadCount}
-                </div>
-              )}
-
-              {showNotifications && (
-                <div style={styles.notificationDropdown}>
-                  <div style={styles.notificationHeader}>Notifications</div>
-
-                  {notifications.length === 0 ? (
-                    <div style={styles.notificationEmpty}>
-                      No notifications
-                    </div>
-                  ) : (
-                    notifications.map((item, index) => (
-                      <div
-                        key={item.id || index}
-                        style={{ ...styles.notificationItem, cursor: item.referenceId ? "pointer" : "default" }}
-                        onClick={() => handleNotificationItemClick(item)}
-                      >
-                        <div style={styles.notificationMessage}>
-                          {item.messageText || item.message || "Notification"}
+            <div style={styles.iconBtn} onClick={() => handleNavigate("messages")}>✉️</div>
+            
+            <div style={styles.relative} onClick={e => e.stopPropagation()}>
+               <div style={styles.iconBtn} onClick={() => setShowNotifications(!showNotifications)}>🔔</div>
+               {unreadCount > 0 && <div style={styles.redBadge}>{unreadCount}</div>}
+               {showNotifications && (
+                 <div style={styles.notifDropdown}>
+                    <div style={styles.notifHeader}>Recent Notifications</div>
+                    {notifications.length === 0 ? (
+                      <p style={styles.emptyNotif}>All caught up! ✨</p>
+                    ) : (
+                      notifications.map(n => (
+                        <div key={n.id} style={styles.notifItem}>
+                           {n.messageText || "New interaction"}
                         </div>
-                        {item.createdAt && (
-                          <div style={styles.notificationTime}>
-                            {new Date(item.createdAt).toLocaleString()}
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
+                      ))
+                    )}
+                 </div>
+               )}
             </div>
-
-            <span
-              style={styles.topIcon}
-              onClick={handleOpenMyProfile}
-              title="Profile"
-            >
-              👤
-            </span>
-
-            <span
-              style={styles.topIcon}
-              onClick={() => setActivePage("settings")}
-              title="Settings"
-            >
-              ☰
-            </span>
+            <div style={styles.iconBtn} onClick={() => handleNavigate("settings")}>☰</div>
           </div>
-        </div>
+        </nav>
 
-        <div style={styles.pageBody(isMobile)}>{renderPage()}</div>
+        <main style={styles.mainPad(isMobile)}>
+          {renderPage()}
+        </main>
       </div>
 
-      {isMobile && (
-        <MobileBottomNav
-          activePage={activePage}
-          onNavigate={handleNavigate}
-        />
-      )}
+      {isMobile && <MobileBottomNav activePage={activePage} onNavigate={handleNavigate} />}
 
       {toastMessage && (
-        <div
-          onClick={() => handleOpenChat({ userId: toastMessage.senderId, username: toastMessage.senderName })}
-          style={{
-            position: "fixed",
-            top: "12px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: "#ffffff",
-            borderLeft: "5px solid #25D366",
-            color: "#1f2937",
-            padding: "12px 20px",
-            borderRadius: "12px",
-            boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-            cursor: "pointer",
-            zIndex: 10000,
-            display: "flex",
-            alignItems: "center",
-            gap: "14px",
-            width: isMobile ? "94%" : "450px",
-            animation: "notificationSlideDown 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards",
-          }}
-        >
-          <div style={{
-            width: "44px", 
-            height: "44px", 
-            borderRadius: "50%", 
-            background: "#25D366", 
-            display: "flex", 
-            alignItems: "center", 
-            justifyContent: "center",
-            flexShrink: 0,
-            color: "#ffffff",
-            fontSize: "20px"
-          }}>
-             {toastMessage.senderName.charAt(0).toUpperCase()}
-          </div>
-          <div style={{ flex: 1, overflow: "hidden" }}>
-             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
-                <strong style={{ fontSize: "15px", fontWeight: "700", color: "#075E54" }}>{toastMessage.senderName}</strong>
-                <span style={{ fontSize: "11px", color: "#25D366", fontWeight: "600" }}>Just now</span>
-             </div>
-             <div style={{ fontSize: "14px", color: "#4b5563", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-               {toastMessage.text}
-             </div>
-          </div>
-          <div style={{ color: "#25D366", fontSize: "18px" }}>💬</div>
+        <div style={styles.toast} onClick={() => handleOpenChat({ userId: toastMessage.senderId, username: toastMessage.senderName })}>
+           <div style={styles.toastBar} />
+           <div style={styles.toastContent}>
+              <div style={styles.toastHeader}>
+                 <strong>{toastMessage.senderName}</strong>
+                 <span>Just now</span>
+              </div>
+              <p style={styles.toastText}>{toastMessage.text}</p>
+           </div>
         </div>
       )}
     </div>
@@ -524,222 +255,97 @@ const HomePage = ({ onLogout }) => {
 };
 
 const styles = {
-  page: {
-    backgroundColor: "#f5f7fb",
+  appContainer: {
     minHeight: "100vh",
-    fontFamily: "Arial, sans-serif",
+    backgroundColor: "#fcfdfe",
+    color: "#111827",
+    fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
   },
-
-  mainArea: (isMobile) => ({
-    marginLeft: isMobile ? "0px" : "78px",
-    minHeight: "100vh",
-    paddingBottom: isMobile ? "76px" : "0px",
+  contentArea: (isMobile) => ({
+    marginLeft: isMobile ? 0 : "80px",
+    width: isMobile ? "100%" : "calc(100% - 80px)",
+    transition: "margin 0.3s ease",
   }),
-
-  topbar: (isMobile) => ({
+  topNavbar: (isMobile) => ({
     position: "fixed",
     top: 0,
-    left: isMobile ? "0px" : "78px",
     right: 0,
-    height: isMobile ? "72px" : "80px",
-    backgroundColor: "#ffffff",
-    borderBottom: "1px solid #e5e7eb",
+    left: isMobile ? 0 : "80px",
+    height: "72px",
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    borderBottom: "1px solid rgba(229, 231, 235, 0.5)",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: isMobile ? "0 12px" : "0 28px",
-    zIndex: 999,
+    padding: isMobile ? "0 16px" : "0 32px",
+    zIndex: 1000,
   }),
-
-  pageBody: (isMobile) => ({
-    paddingTop: isMobile ? "84px" : "105px",
-    paddingLeft: isMobile ? "0px" : "24px",
-    paddingRight: isMobile ? "0px" : "24px",
-    paddingBottom: isMobile ? "10px" : "24px",
-    overflowX: "hidden",
-    width: "100%",
+  logoBox: { display: "flex", alignItems: "center", gap: "10px" },
+  logoCircle: {
+     width: "36px", height: "36px", borderRadius: "10px", 
+     background: "linear-gradient(135deg, #2563eb, #4f46e5)",
+     color: "#fff", display: "flex", alignItems: "center", 
+     justifyContent: "center", fontWeight: "900", fontSize: "18px"
+  },
+  logoText: { fontSize: "22px", fontWeight: "800", letterSpacing: "-0.5px", margin: 0 },
+  navIcons: { display: "flex", alignItems: "center", gap: "14px" },
+  userCapsule: {
+    display: "flex", alignItems: "center", gap: "8px", 
+    backgroundColor: "rgba(37, 99, 235, 0.05)", 
+    padding: "6px 12px", borderRadius: "100px", border: "1px solid rgba(37, 99, 235, 0.1)"
+  },
+  navAvatar: { width: "28px", height: "28px", borderRadius: "50%", objectFit: "cover" },
+  navInitial: { 
+    width: "28px", height: "28px", borderRadius: "50%", background: "#2563eb", 
+    color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "700" 
+  },
+  navUsername: { fontSize: "14px", fontWeight: "600", color: "#1f2937" },
+  iconBtn: { fontSize: "20px", cursor: "pointer", transition: "transform 0.2s ease" },
+  redBadge: {
+    position: "absolute", top: "-5px", right: "-5px", backgroundColor: "#ef4444", 
+    color: "#fff", fontSize: "10px", fontWeight: "700", padding: "2px 5px", borderRadius: "100px", border: "2px solid #fff"
+  },
+  relative: { position: "relative" },
+  notifDropdown: {
+    position: "absolute", top: "45px", right: 0, width: "280px", 
+    backgroundColor: "#fff", borderRadius: "16px", boxShadow: "0 15px 40px rgba(0,0,0,0.1)",
+    border: "1px solid #f3f4f6", padding: "12px", overflow: "hidden"
+  },
+  notifItem: { padding: "10px", borderBottom: "1px solid #f9fafb", fontSize: "13px" },
+  mainPad: (isMobile) => ({
+    paddingTop: "90px",
+    paddingLeft: isMobile ? "12px" : "40px",
+    paddingRight: isMobile ? "12px" : "40px",
+    paddingBottom: isMobile ? "80px" : "40px",
   }),
-
-  brandSection: {
+  mainFeedGrid: (isMobile) => ({
     display: "flex",
-    alignItems: "center",
-    gap: "10px",
-  },
-
-  brandAvatar: {
-    width: "42px",
-    height: "42px",
-    objectFit: "contain",
-    flexShrink: 0,
-  },
-
-  logo: {
-    margin: 0,
-    fontSize: "22px",
-    fontWeight: "700",
-    color: "#1f2937",
-  },
-
-  logoSub: {
-    margin: "2px 0 0 0",
-    fontSize: "13px",
-    color: "#6b7280",
-  },
-
-  topIcons: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    fontSize: "22px",
-    color: "#6b7280",
-  },
-
-  topIcon: {
-    cursor: "pointer",
-    userSelect: "none",
-  },
-
-  currentUserBox: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    background: "#f3f4f6",
-    padding: "6px 10px",
-    borderRadius: "14px",
-    maxWidth: "220px",
-  },
-
-  userProfileAvatar: {
-    width: "34px",
-    height: "34px",
-    borderRadius: "50%",
-    background: "#dbeafe",
-    color: "#1d4ed8",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: "700",
-    fontSize: "14px",
-    flexShrink: 0,
-  },
-
-  userNavbarImage: {
-    width: "34px",
-    height: "34px",
-    borderRadius: "50%",
-    objectFit: "cover",
-    border: "1px solid #d1d5db",
-    flexShrink: 0,
-  },
-
-  userBadge: {
-    fontWeight: "600",
-    color: "#374151",
-    fontSize: "14px",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-
-  notificationWrap: {
-    position: "relative",
-  },
-
-  badge: {
-    position: "absolute",
-    top: "-6px",
-    right: "-8px",
-    minWidth: "18px",
-    height: "18px",
-    borderRadius: "999px",
-    background: "#ef4444",
-    color: "#ffffff",
-    fontSize: "11px",
-    fontWeight: "700",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "0 5px",
-  },
-
-  notificationDropdown: {
-    position: "absolute",
-    top: "36px",
-    right: 0,
-    width: "290px",
-    maxHeight: "320px",
-    overflowY: "auto",
-    background: "#ffffff",
-    border: "1px solid #e5e7eb",
-    borderRadius: "16px",
-    boxShadow: "0 12px 30px rgba(0,0,0,0.12)",
-    padding: "10px",
-    zIndex: 1200,
-  },
-
-  notificationHeader: {
-    fontSize: "15px",
-    fontWeight: "700",
-    color: "#111827",
-    padding: "6px 8px 10px 8px",
-    borderBottom: "1px solid #f3f4f6",
-    marginBottom: "6px",
-  },
-
-  notificationEmpty: {
-    fontSize: "14px",
-    color: "#6b7280",
-    padding: "12px 8px",
-  },
-
-  notificationItem: {
-    padding: "10px 8px",
-    borderBottom: "1px solid #f3f4f6",
-  },
-
-  notificationMessage: {
-    fontSize: "14px",
-    color: "#111827",
-    lineHeight: "1.4",
-  },
-
-  notificationTime: {
-    fontSize: "11px",
-    color: "#6b7280",
-    marginTop: "4px",
-  },
-  notificationMeta:{
-    fontSize :"12px",
-    color :"#6b7280",
-    marginTop :"4px",
-  },
-
-  contentWrapper: (isMobile) => ({
-    display: "flex",
-    flexDirection: isMobile ? "column" : "row",
-    gap: "24px",
-    alignItems: isMobile ? "stretch" : "flex-start",
-    width: "100%",
+    gap: "32px",
+    maxWidth: "1200px",
+    margin: "0 auto",
   }),
-
-  leftContent: {
-    flex: 1,
-    minWidth: 0,
-    width: "100%",
+  leftCol: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "24px" },
+  rightCol: { width: "320px", position: "sticky", top: "105px", height: "fit-content" },
+  toast: {
+    position: "fixed", top: "85px", left: "50%", transform: "translateX(-50%)",
+    backgroundColor: "#fff", borderRadius: "16px", boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
+    display: "flex", width: "320px", overflow: "hidden", zIndex: 10001, cursor: "pointer",
+    animation: "slideInTop 0.5s ease forwards"
   },
-
-  rightContent: {
-    width: "340px",
-  },
+  toastBar: { width: "6px", backgroundColor: "#2563eb" },
+  toastContent: { padding: "12px 16px", flex: 1 },
+  toastHeader: { display: "flex", justifyContent: "space-between", marginBottom: "4px" },
+  toastText: { fontSize: "13px", color: "#6b7280", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }
 };
 
-const globalStyles = `
-::-webkit-scrollbar {
-  display: none;
-}
-@keyframes notificationSlideDown {
-  from { transform: translate(-50%, -100px); opacity: 0; }
+const globalAnimations = `
+@keyframes slideInTop {
+  from { transform: translate(-50%, -100%); opacity: 0; }
   to { transform: translate(-50%, 0); opacity: 1; }
 }
+.settings-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(37, 99, 235, 0.1); }
 `;
+
 export default HomePage;
