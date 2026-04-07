@@ -5,7 +5,7 @@ import {
   getUserProfile,
   uploadProfileImage,
 } from "../services/userService";
-import { toggleFollow as toggleFollowApi, getFollowers, getFollowing } from "../services/followService";
+import { toggleFollow as toggleFollowApi, getFollowers, getFollowing } from "../services/followService.js";
 import { resolveMediaUrl } from "../utils/media";
 import { deletePost } from "../services/postService";
 import SinglePostModal from "../components/SinglePostModal";

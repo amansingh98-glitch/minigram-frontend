@@ -4,8 +4,8 @@ import {
   deleteComment,
   deletePost,
 } from "../services/postService";
-import { toggleLike, getLikes } from "../services/likeService";
-import { toggleFollow } from "../services/followService";
+import { toggleLike, getLikes } from "../services/likeService.js";
+import { toggleFollow } from "../services/followService.js";
 
 import CommentModal from "./CommentModal";
 import UserListModal from "./UserListModal";
