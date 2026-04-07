@@ -91,3 +91,39 @@ export const resetPasswordWithOtp = async ({ email, otp, newPassword }) => {
 
   return raw;
 };
+
+export const verifyRegistrationOtp = async (email, otp) => {
+  const response = await fetch(`${API_BASE_URL}/api/auth/verify-otp`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, otp }),
+  });
+
+  const raw = await response.json();
+
+  if (!response.ok) {
+    throw new Error(raw.message || "Invalid or expired OTP");
+  }
+
+  return raw;
+};
+
+export const resendVerificationOtp = async (email) => {
+  const response = await fetch(`${API_BASE_URL}/api/auth/resend-otp`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email }),
+  });
+
+  const raw = await response.text();
+
+  if (!response.ok) {
+    throw new Error(raw || "Failed to resend OTP");
+  }
+
+  return raw;
+};
