@@ -65,7 +65,7 @@ const styles = {
     border: "1px solid rgba(255, 255, 255, 0.4)",
     display: "flex",
     flexDirection: "column",
-    height: "calc(100vh - 100px)",
+    height: "100%",
     overflow: "hidden",
     boxShadow: "0 10px 30px rgba(0,0,0,0.03)",
   },

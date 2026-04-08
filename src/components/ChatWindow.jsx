@@ -267,7 +267,7 @@ const ChatWindow = ({ selectedUser, onMessageSent, isMobile, onBackClick }) => {
 };
 
 const styles = {
-  chatWindow: { flex: 1, display: "flex", flexDirection: "column", height: "calc(100vh - 100px)", background: "rgba(255,255,255,0.4)", backdropFilter: "blur(24px)", borderRadius: "32px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.4)", boxShadow: "0 10px 30px rgba(0,0,0,0.02)" },
+  chatWindow: { flex: 1, display: "flex", flexDirection: "column", height: "100%", background: "rgba(255,255,255,0.4)", backdropFilter: "blur(24px)", borderRadius: "32px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.4)", boxShadow: "0 10px 30px rgba(0,0,0,0.02)" },
   chatHeader: { padding: "16px 24px", background: "rgba(255,255,255,0.8)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(0,0,0,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" },
   headerLeft: { display: "flex", alignItems: "center", gap: "12px" },
   headerAvatar: { width: "42px", height: "42px", borderRadius: "14px", objectFit: "cover" },

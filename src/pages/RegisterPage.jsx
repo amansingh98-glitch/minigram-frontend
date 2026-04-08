@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { registerUser, verifyRegistrationOtp, resendVerificationOtp } from "../services/authService";
 
 function RegisterPage({ goToLogin }) {

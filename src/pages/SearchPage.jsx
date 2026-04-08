@@ -1,3 +1,8 @@
+import React, { useState } from "react";
+import { searchUsers } from "../services/userService";
+import { toggleFollow } from "../services/followService";
+import { resolveMediaUrl } from "../utils/media";
+
 const SearchPage = ({ onUserClick, onMessageUser }) => {
   const [keyword, setKeyword] = useState("");
   const [users, setUsers] = useState([]);

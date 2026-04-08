@@ -274,10 +274,10 @@ const styles = {
     right: 0,
     left: isMobile ? 0 : "80px",
     height: "72px",
-    backgroundColor: "rgba(255, 255, 255, 0.7)",
-    backdropFilter: "blur(20px)",
-    WebkitBackdropFilter: "blur(20px)",
-    borderBottom: "1px solid rgba(255, 255, 255, 0.3)",
+    backgroundColor: "var(--glass-bg)",
+    backdropFilter: "var(--glass-blur)",
+    WebkitBackdropFilter: "var(--glass-blur)",
+    borderBottom: "1px solid var(--glass-border)",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
@@ -288,33 +288,44 @@ const styles = {
   logoBox: { display: "flex", alignItems: "center", gap: "10px" },
   logoCircle: {
      width: "36px", height: "36px", borderRadius: "10px", 
-     background: "linear-gradient(135deg, #2563eb, #4f46e5)",
+     background: "linear-gradient(135deg, var(--primary-accent), var(--secondary-accent))",
      color: "#fff", display: "flex", alignItems: "center", 
-     justifyContent: "center", fontWeight: "900", fontSize: "18px"
+     justifyContent: "center", fontWeight: "900", fontSize: "18px",
+     boxShadow: "0 4px 12px rgba(37, 99, 235, 0.2)"
   },
-  logoText: { fontSize: "22px", fontWeight: "800", letterSpacing: "-0.5px", margin: 0 },
+  logoText: { 
+    fontSize: "22px", 
+    fontWeight: "900", 
+    color: "var(--text-main)", 
+    margin: 0, 
+    letterSpacing: "-1px",
+    fontFamily: "'Outfit', sans-serif"
+  },
   navIcons: { display: "flex", alignItems: "center", gap: "14px" },
   userCapsule: {
     display: "flex", alignItems: "center", gap: "8px", 
     backgroundColor: "rgba(37, 99, 235, 0.05)", 
-    padding: "6px 12px", borderRadius: "100px", border: "1px solid rgba(37, 99, 235, 0.1)"
+    padding: "6px 14px", borderRadius: "100px", border: "1px solid rgba(37, 99, 235, 0.1)",
+    cursor: "pointer", transition: "all 0.2s ease"
   },
-  navAvatar: { width: "28px", height: "28px", borderRadius: "50%", objectFit: "cover" },
+  navAvatar: { width: "30px", height: "30px", borderRadius: "50%", objectFit: "cover" },
   navInitial: { 
-    width: "28px", height: "28px", borderRadius: "50%", background: "#2563eb", 
-    color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "700" 
+    width: "30px", height: "30px", borderRadius: "50%", background: "var(--primary-accent)", 
+    color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "800" 
   },
-  navUsername: { fontSize: "14px", fontWeight: "600", color: "#1f2937" },
-  iconBtn: { fontSize: "20px", cursor: "pointer", transition: "transform 0.2s ease" },
+  navUsername: { fontSize: "14px", fontWeight: "700", color: "var(--text-main)" },
+  iconBtn: { fontSize: "20px", cursor: "pointer", transition: "transform 0.2s ease", color: "var(--text-main)" },
   redBadge: {
-    position: "absolute", top: "-5px", right: "-5px", backgroundColor: "#ef4444", 
-    color: "#fff", fontSize: "10px", fontWeight: "700", padding: "2px 5px", borderRadius: "100px", border: "2px solid #fff"
+    position: "absolute", top: "-4px", right: "-4px", backgroundColor: "#ef4444", 
+    color: "#fff", fontSize: "10px", fontWeight: "800", padding: "2px 5px", borderRadius: "100px", border: "2px solid #fff"
   },
   relative: { position: "relative" },
   notifDropdown: {
-    position: "absolute", top: "45px", right: 0, width: "280px", 
-    backgroundColor: "#fff", borderRadius: "16px", boxShadow: "0 15px 40px rgba(0,0,0,0.1)",
-    border: "1px solid #f3f4f6", padding: "12px", overflow: "hidden"
+    position: "absolute", top: "50px", right: 0, width: "300px", 
+    backgroundColor: "var(--glass-bg)", backdropFilter: "var(--glass-blur)", 
+    borderRadius: "24px", boxShadow: "0 15px 40px rgba(0,0,0,0.1)",
+    border: "1px solid var(--glass-border)", padding: "12px", overflow: "hidden",
+    zIndex: 3000
   },
   notifItem: { padding: "10px", borderBottom: "1px solid #f9fafb", fontSize: "13px" },
   mainPad: (isMobile) => ({

@@ -43,7 +43,16 @@ const ChatPage = ({ initialSelectedUser = null }) => {
   }, [initialSelectedUser]);
 
   return (
-    <div className="chat-layout" style={{ display: isMobile ? "block" : "grid" }}>
+    <div 
+      className="chat-layout" 
+      style={{ 
+        display: isMobile ? "flex" : "grid",
+        gridTemplateColumns: isMobile ? "1fr" : "350px 1fr",
+        flexDirection: "column",
+        height: isMobile ? "calc(100dvh - 170px)" : "calc(100vh - 120px)",
+        gap: isMobile ? "0" : "24px",
+      }}
+    >
       {(!isMobile || !selectedUser) && (
         <ChatList
           conversations={conversations}
