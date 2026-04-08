@@ -3,7 +3,7 @@ import { getStories, uploadStory } from "../services/storyService";
 import StoryViewer from "./StoryViewer";
 import { resolveMediaUrl } from "../utils/media";
 
-const StoriesBar = () => {
+const StoriesBar = ({ onStoryToggle }) => {
   const [stories, setStories] = useState([]);
   const [selectedUserStories, setSelectedUserStories] = useState([]);
   const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
@@ -66,11 +66,13 @@ const StoriesBar = () => {
 
     setSelectedUserStories(normalizedStories);
     setSelectedStoryIndex(index);
+    if (onStoryToggle) onStoryToggle(true);
   };
 
   const closeViewer = () => {
     setSelectedUserStories([]);
     setSelectedStoryIndex(0);
+    if (onStoryToggle) onStoryToggle(false);
   };
 
   return (

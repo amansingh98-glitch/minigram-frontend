@@ -38,6 +38,7 @@ const HomePage = ({ onLogout }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [toastMessage, setToastMessage] = useState(null);
+  const [isStoryOpen, setIsStoryOpen] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -175,7 +176,7 @@ const HomePage = ({ onLogout }) => {
         return (
           <div style={styles.mainFeedGrid(isMobile)}>
             <div style={styles.leftCol}>
-              <StoriesBar />
+              <StoriesBar onStoryToggle={setIsStoryOpen} />
               <PostComposer
                 content={content}
                 setContent={setContent}
@@ -262,7 +263,7 @@ const HomePage = ({ onLogout }) => {
         </main>
       </div>
 
-      {isMobile && <MobileBottomNav activePage={activePage} onNavigate={handleNavigate} />}
+      {isMobile && !isStoryOpen && <MobileBottomNav activePage={activePage} onNavigate={handleNavigate} />}
 
       {toastMessage && (
         <div style={styles.toast} onClick={() => handleOpenChat({ userId: toastMessage.senderId, username: toastMessage.senderName })}>
