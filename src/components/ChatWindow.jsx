@@ -259,7 +259,9 @@ const ChatWindow = ({ selectedUser, onMessageSent, isMobile, onBackClick }) => {
             onChange={(e) => handleTypingChange(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
           />
-          <button style={styles.sendBtn} onClick={handleSendMessage} disabled={sending}>Send</button>
+          <button style={styles.sendBtn} onClick={handleSendMessage} disabled={sending}>
+            {sending && !messageText.trim() ? "..." : "Send"}
+          </button>
         </div>
       </footer>
     </div>

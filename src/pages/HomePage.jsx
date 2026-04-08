@@ -86,6 +86,18 @@ const HomePage = ({ onLogout }) => {
     }
   };
 
+  const loadNotifications = async () => {
+    try {
+      const data = await getNotifications();
+      setNotifications(Array.isArray(data) ? data.map(n => ({
+        ...n,
+        actorProfileImageUrl: resolveMediaUrl(n.actorProfileImageUrl),
+      })) : []);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const loadUnreadCount = async () => {
     try {
       const count = await getUnreadNotificationCount();
@@ -98,6 +110,7 @@ const HomePage = ({ onLogout }) => {
   useEffect(() => {
     loadPosts();
     loadMyProfile();
+    loadNotifications();
     loadUnreadCount();
     setOnline().catch(console.error);
     return () => {
@@ -109,12 +122,17 @@ const HomePage = ({ onLogout }) => {
   useEffect(() => {
     if (currentProfile?.id) {
       connectGlobalSocket(currentProfile.id, (payload) => {
+        // payload is NotificationResponse
+        loadNotifications();
+        loadUnreadCount();
+
         if (activePage === "messages" && selectedChatUser?.userId === payload.senderId) return;
-        if (payload.senderId !== currentProfile.id) {
+        
+        if (payload.actorUserId !== currentProfile.id) {
            setToastMessage({
-             senderName: payload.senderName || "Someone",
-             text: payload.messageType === "FILE" || payload.messageType === "IMAGE" ? "Sent an attachment" : payload.messageText,
-             senderId: payload.senderId
+             senderName: payload.actorName || "Someone",
+             text: payload.messageText,
+             senderId: payload.actorUserId
            });
            setTimeout(() => setToastMessage(null), 5000);
         }
@@ -212,7 +230,13 @@ const HomePage = ({ onLogout }) => {
             <div style={styles.iconBtn} onClick={() => handleNavigate("messages")}>✉️</div>
             
             <div style={styles.relative} onClick={e => e.stopPropagation()}>
-               <div style={styles.iconBtn} onClick={() => setShowNotifications(!showNotifications)}>🔔</div>
+               <div style={styles.iconBtn} onClick={() => { 
+                 const nextShow = !showNotifications;
+                 setShowNotifications(nextShow); 
+                 if (nextShow && unreadCount > 0) {
+                   markNotificationsAsRead().then(() => setUnreadCount(0)).catch(console.error);
+                 }
+               }}>🔔</div>
                {unreadCount > 0 && <div style={styles.redBadge}>{unreadCount}</div>}
                {showNotifications && (
                  <div style={styles.notifDropdown}>
