@@ -7,30 +7,38 @@ const MobileBottomNav = ({ activePage, onNavigate }) => {
     { icon: "🎬", label: "Reels", key: "reels" },
     { icon: "💬", label: "Chat", key: "messages" },
     { icon: "👤", label: "Profile", key: "profile" },
-    { icon: "⚙️", label: "Settings", key: "settings" },
   ];
 
   return (
     <nav style={styles.nav}>
-      {menuItems.map((item) => (
-        <div
-          key={item.key}
-          style={{
-            ...styles.item,
-            color: activePage === item.key ? "#2563eb" : "#9ca3af",
-            transform: activePage === item.key ? "translateY(-4px)" : "translateY(0)"
-          }}
-          onClick={() => onNavigate(item.key)}
-        >
-          <div style={{ ...styles.icon, transform: activePage === item.key ? "scale(1.2)" : "scale(1)" }}>
-            {item.icon}
+      {menuItems.map((item) => {
+        const isActive = activePage === item.key;
+        return (
+          <div
+            key={item.key}
+            style={{
+              ...styles.item,
+              color: isActive ? "#2563eb" : "#94a3b8",
+            }}
+            onClick={() => onNavigate(item.key)}
+          >
+            <div style={{ 
+              ...styles.iconWrapper, 
+              backgroundColor: isActive ? "rgba(37, 99, 235, 0.1)" : "transparent",
+              transform: isActive ? "translateY(-4px)" : "translateY(0)"
+            }}>
+              <span style={{ 
+                ...styles.icon, 
+                fontSize: isActive ? "22px" : "20px",
+                filter: isActive ? "none" : "grayscale(100%) opacity(0.7)"
+              }}>
+                {item.icon}
+              </span>
+            </div>
+            {isActive && <span style={styles.label}>{item.label}</span>}
           </div>
-          <span style={{ ...styles.label, opacity: activePage === item.key ? 1 : 0.8 }}>
-            {item.label}
-          </span>
-          {activePage === item.key && <div style={styles.activeDot} />}
-        </div>
-      ))}
+        );
+      })}
     </nav>
   );
 };
@@ -38,16 +46,18 @@ const MobileBottomNav = ({ activePage, onNavigate }) => {
 const styles = {
   nav: {
     position: "fixed",
-    bottom: "12px",
-    left: "12px",
-    right: "12px",
-    height: "68px",
-    background: "rgba(255, 255, 255, 0.85)",
-    backdropFilter: "blur(16px)",
-    WebkitBackdropFilter: "blur(16px)",
+    bottom: "20px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    width: "calc(100% - 40px)",
+    maxWidth: "400px",
+    height: "72px",
+    background: "rgba(255, 255, 255, 0.8)",
+    backdropFilter: "blur(20px)",
+    WebkitBackdropFilter: "blur(20px)",
     borderRadius: "24px",
-    border: "1px solid rgba(229, 231, 235, 0.5)",
-    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.08)",
+    border: "1px solid rgba(255, 255, 255, 0.5)",
+    boxShadow: "0 20px 40px rgba(0, 0, 0, 0.1)",
     display: "flex",
     justifyContent: "space-around",
     alignItems: "center",
@@ -59,18 +69,30 @@ const styles = {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    gap: "4px",
+    gap: "2px",
     cursor: "pointer",
     flex: 1,
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    position: "relative"
+    transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+    position: "relative",
+    height: "100%",
   },
-  icon: { fontSize: "20px", transition: "transform 0.3s ease" },
-  label: { fontSize: "10px", fontWeight: "700", transition: "opacity 0.3s ease" },
-  activeDot: {
-    position: "absolute", bottom: "-8px", width: "4px", height: "4px", 
-    borderRadius: "50%", background: "#2563eb"
-  }
+  iconWrapper: {
+    width: "44px",
+    height: "44px",
+    borderRadius: "14px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "all 0.3s ease",
+  },
+  icon: { transition: "all 0.3s ease" },
+  label: { 
+    fontSize: "10px", 
+    fontWeight: "800", 
+    textTransform: "uppercase", 
+    letterSpacing: "0.5px",
+    animation: "fadeIn 0.3s ease forwards"
+  },
 };
 
 export default MobileBottomNav;

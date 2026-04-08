@@ -157,8 +157,19 @@ const ChatWindow = ({ selectedUser, onMessageSent, isMobile, onBackClick }) => {
         📎 {m.fileName || "Download"}
       </a>
     );
-    return <div>{m.messageText}</div>;
+    return <div style={{ fontSize: "14px", lineHeight: "1.4" }}>{m.messageText}</div>;
   };
+
+  const TypingIndicator = () => (
+    <div style={styles.typingArea}>
+      <div style={styles.typingBubble}>
+        <div style={styles.dot}></div>
+        <div style={{ ...styles.dot, animationDelay: "0.2s" }}></div>
+        <div style={{ ...styles.dot, animationDelay: "0.4s" }}></div>
+      </div>
+      <span style={styles.typingText}>{typingText}</span>
+    </div>
+  );
 
   if (!selectedUser) {
     return (
@@ -172,6 +183,7 @@ const ChatWindow = ({ selectedUser, onMessageSent, isMobile, onBackClick }) => {
 
   return (
     <div style={styles.chatWindow}>
+      <style>{chatAnimations}</style>
       {/* Header */}
       <header style={styles.chatHeader}>
         <div style={styles.headerLeft}>
@@ -202,15 +214,14 @@ const ChatWindow = ({ selectedUser, onMessageSent, isMobile, onBackClick }) => {
               >
                 {m.replyToMessageText && (
                   <div style={styles.replyBubble}>
-                    <small>Replying to:</small>
                     <div style={styles.replyText}>{m.replyToMessageText}</div>
                   </div>
                 )}
                 {renderMessageBody(m)}
                 {m.reaction && <div style={styles.reactionBadge}>{m.reaction}</div>}
-                <div style={styles.msgTime(m.currentUserMessage)}>
-                  {m.createdAt?.replace("T", " ").slice(11, 16)} {m.currentUserMessage && (m.status === "SEEN" ? "✔✔" : "✔")}
-                </div>
+              </div>
+              <div style={styles.msgTime(m.currentUserMessage)}>
+                {m.createdAt?.replace("T", " ").slice(11, 16)} {m.currentUserMessage && (m.status === "SEEN" ? "✔✔" : "✔")}
               </div>
 
               {menuMessageId === m.id && (
@@ -226,6 +237,7 @@ const ChatWindow = ({ selectedUser, onMessageSent, isMobile, onBackClick }) => {
             </div>
           </div>
         ))}
+        {typingText && <TypingIndicator />}
         <div ref={messagesEndRef} />
       </div>
 
@@ -255,41 +267,62 @@ const ChatWindow = ({ selectedUser, onMessageSent, isMobile, onBackClick }) => {
 };
 
 const styles = {
-  chatWindow: { flex: 1, display: "flex", flexDirection: "column", height: "calc(100vh - 100px)", background: "#fff", borderRadius: "24px", overflow: "hidden", border: "1px solid #f3f4f6" },
-  chatHeader: { padding: "16px 24px", background: "rgba(255,255,255,0.8)", backdropFilter: "blur(12px)", borderBottom: "1px solid #f3f4f6", display: "flex", justifyContent: "space-between", alignItems: "center" },
+  chatWindow: { flex: 1, display: "flex", flexDirection: "column", height: "calc(100vh - 100px)", background: "rgba(255,255,255,0.4)", backdropFilter: "blur(24px)", borderRadius: "32px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.4)", boxShadow: "0 10px 30px rgba(0,0,0,0.02)" },
+  chatHeader: { padding: "16px 24px", background: "rgba(255,255,255,0.8)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(0,0,0,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" },
   headerLeft: { display: "flex", alignItems: "center", gap: "12px" },
-  headerAvatar: { width: "40px", height: "40px", borderRadius: "12px", objectFit: "cover" },
-  headerInitial: { width: "40px", height: "40px", borderRadius: "12px", background: "#2563eb", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700" },
-  headerName: { fontWeight: "700", color: "#111827", fontSize: "16px" },
-  headerStatus: { fontSize: "12px", color: "#6b7280", display: "flex", alignItems: "center", gap: "6px" },
-  onlineDot: { width: "8px", height: "8px", background: "#10b981", borderRadius: "50%" },
-  messageArea: { flex: 1, overflowY: "auto", padding: "24px", display: "flex", flexDirection: "column", gap: "16px" },
-  msgRow: (mine) => ({ display: "flex", justifyContent: mine ? "flex-end" : "flex-start" }),
-  bubbleWrap: { position: "relative", maxWidth: "75%" },
+  headerAvatar: { width: "42px", height: "42px", borderRadius: "14px", objectFit: "cover" },
+  headerInitial: { width: "42px", height: "42px", borderRadius: "14px", background: "linear-gradient(135deg, #2563eb, #4f46e5)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "800", fontSize: "18px" },
+  headerName: { fontWeight: "800", color: "#111827", fontSize: "16px", letterSpacing: "-0.3px" },
+  headerStatus: { fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center", gap: "6px", fontWeight: "500" },
+  onlineDot: { width: "8px", height: "8px", background: "#10b981", borderRadius: "50%", boxShadow: "0 0 10px rgba(16,185,129,0.5)" },
+  backBtn: { background: "none", border: "none", fontSize: "20px", cursor: "pointer", marginRight: "8px" },
+  messageArea: { flex: 1, overflowY: "auto", padding: "20px", display: "flex", flexDirection: "column", gap: "12px", scrollbarWidth: "none" },
+  msgRow: (mine) => ({ display: "flex", justifyContent: mine ? "flex-end" : "flex-start", animation: "msgIn 0.3s ease-out forwards" }),
+  bubbleWrap: { position: "relative", maxWidth: "80%" },
   bubble: (mine) => ({
-    padding: "12px 16px", borderRadius: "18px", borderBottomRightRadius: mine ? "2px" : "18px", borderBottomLeftRadius: mine ? "18px" : "2px",
-    background: mine ? "linear-gradient(135deg, #2563eb, #4f46e5)" : "#f3f4f6",
-    color: mine ? "#fff" : "#111827", fontSize: "15px", position: "relative", boxShadow: mine ? "0 4px 12px rgba(37, 99, 235, 0.2)" : "none"
+    padding: "12px 16px", borderRadius: "20px", borderBottomRightRadius: mine ? "4px" : "20px", borderBottomLeftRadius: mine ? "20px" : "4px",
+    background: mine ? "linear-gradient(135deg, #2563eb, #7c3aed)" : "#fff",
+    color: mine ? "#fff" : "#1e293b", fontSize: "15px", position: "relative", 
+    boxShadow: mine ? "0 8px 20px rgba(37, 99, 235, 0.15)" : "0 2px 8px rgba(0,0,0,0.04)",
+    border: mine ? "none" : "1px solid #f1f5f9",
+    transition: "transform 0.2s ease"
   }),
-  msgTime: (mine) => ({ fontSize: "10px", marginTop: "4px", textAlign: mine ? "right" : "left", opacity: 0.7 }),
-  imgPreview: { maxWidth: "100%", borderRadius: "12px", marginTop: "8px" },
-  chatFooter: { padding: "16px 24px", background: "#fff", borderTop: "1px solid #f3f4f6" },
-  inputRow: { display: "flex", gap: "12px", alignItems: "center" },
-  chatInput: { flex: 1, border: "1px solid #e5e7eb", borderRadius: "12px", padding: "12px 16px", fontSize: "15px", outline: "none", background: "#f9fafb" },
-  attachBtn: { border: "none", background: "#f3f4f6", width: "40px", height: "40px", borderRadius: "10px", fontSize: "18px", cursor: "pointer" },
-  sendBtn: { border: "none", background: "#2563eb", color: "#fff", padding: "0 20px", height: "40px", borderRadius: "10px", fontWeight: "700", cursor: "pointer" },
-  emptyWrap: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#f9fafb", borderRadius: "24px", padding: "40px" },
+  msgTime: (mine) => ({ fontSize: "10px", marginTop: "4px", textAlign: mine ? "right" : "left", color: "#94a3b8", fontWeight: "600" }),
+  imgPreview: { maxWidth: "100%", borderRadius: "16px", marginTop: "4px", display: "block" },
+  chatFooter: { padding: "16px 20px", background: "rgba(255,255,255,0.7)", backdropFilter: "blur(12px)", borderTop: "1px solid rgba(0,0,0,0.05)" },
+  inputRow: { display: "flex", gap: "10px", alignItems: "center" },
+  chatInput: { flex: 1, border: "1px solid #e2e8f0", borderRadius: "16px", padding: "12px 18px", fontSize: "14px", outline: "none", background: "#fff", transition: "all 0.3s ease" },
+  attachBtn: { border: "none", background: "#f1f5f9", width: "42px", height: "42px", borderRadius: "14px", fontSize: "18px", cursor: "pointer", transition: "all 0.2s ease" },
+  sendBtn: { border: "none", background: "linear-gradient(135deg, #2563eb, #7c3aed)", color: "#fff", padding: "0 20px", height: "42px", borderRadius: "14px", fontWeight: "800", cursor: "pointer", boxShadow: "0 4px 12px rgba(37,99,235,0.2)" },
+  typingArea: { display: "flex", alignItems: "center", gap: "10px", margin: "4px 0" },
+  typingBubble: { background: "#f1f5f9", padding: "10px 14px", borderRadius: "18px", display: "flex", gap: "4px" },
+  dot: { width: "6px", height: "6px", background: "#94a3b8", borderRadius: "50%", animation: "typingDot 1.4s infinite ease-in-out" },
+  typingText: { fontSize: "12px", color: "#94a3b8", fontWeight: "500" },
+  emptyWrap: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.5)", borderRadius: "32px", padding: "40px" },
   emptyIcon: { fontSize: "60px", marginBottom: "20px" },
   emptyTitle: { fontSize: "24px", fontWeight: "800", color: "#111827", marginBottom: "8px" },
   emptyText: { color: "#6b7280" },
-  reactionBadge: { position: "absolute", bottom: "-10px", right: "-10px", background: "#fff", borderRadius: "50%", padding: "2px", boxShadow: "0 2px 4px rgba(0,0,0,0.1)", fontSize: "12px" },
-  msgMenu: (mine) => ({ position: "absolute", bottom: "100%", right: mine ? 0 : "auto", left: mine ? "auto" : 0, background: "#fff", boxShadow: "0 10px 25px rgba(0,0,0,0.1)", borderRadius: "12px", padding: "8px", zIndex: 10, marginBottom: "8px" }),
-  menuBtn: { width: "100%", textAlign: "left", padding: "8px 12px", border: "none", background: "transparent", cursor: "pointer", fontSize: "14px" },
-  reactionRow: { display: "flex", gap: "8px", padding: "4px 8px" },
+  reactionBadge: { position: "absolute", bottom: "-8px", right: "-4px", background: "#fff", borderRadius: "20px", padding: "2px 6px", boxShadow: "0 4px 8px rgba(0,0,0,0.1)", fontSize: "12px", border: "1px solid #f1f5f9" },
+  msgMenu: (mine) => ({ position: "absolute", bottom: "100%", right: mine ? 0 : "auto", left: mine ? "auto" : 0, background: "rgba(255,255,255,0.95)", backdropFilter: "blur(10px)", boxShadow: "0 15px 40px rgba(0,0,0,0.12)", borderRadius: "16px", padding: "8px", zIndex: 10, marginBottom: "8px", border: "1px solid rgba(255,255,255,0.5)" }),
+  menuBtn: { width: "100%", textAlign: "left", padding: "10px 14px", border: "none", background: "transparent", cursor: "pointer", fontSize: "13px", fontWeight: "700", color: "#475569" },
+  reactionRow: { display: "flex", gap: "6px", padding: "6px", borderTop: "1px solid #f1f5f9" },
   reactionIcon: { cursor: "pointer", fontSize: "18px" },
-  replyBubble: { background: "rgba(0,0,0,0.05)", padding: "6px 8px", borderRadius: "8px", marginBottom: "8px", fontSize: "12px", borderLeft: "3px solid #2563eb" },
-  replyPreview: { background: "#f9fafb", padding: "8px 12px", borderRadius: "10px", marginBottom: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", borderLeft: "4px solid #2563eb" },
-  replyClose: { cursor: "pointer", fontSize: "20px", opacity: 0.5 }
+  replyBubble: { background: "rgba(0,0,0,0.03)", padding: "8px 10px", borderRadius: "12px", marginBottom: "6px", fontSize: "12px", borderLeft: "3px solid #2563eb", color: "inherit", opacity: 0.8 },
+  replyText: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  replyPreview: { background: "#f1f5f9", padding: "10px 14px", borderRadius: "12px", marginBottom: "10px", display: "flex", justifyContent: "space-between", alignItems: "center", borderLeft: "4px solid #2563eb" },
+  replyPreviewBody: { fontSize: "12px", color: "#475569", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  replyClose: { cursor: "pointer", fontSize: "18px", color: "#94a3b8" }
 };
+
+const chatAnimations = `
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes typingDot {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+`;
 
 export default ChatWindow;

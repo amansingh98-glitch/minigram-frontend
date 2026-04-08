@@ -6,10 +6,11 @@ function RegisterPage({ goToLogin }) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [otp, setOtp] = useState("");
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const otpRefs = [useRef(), useRef(), useRef(), useRef(), useRef(), useRef()];
 
   const handleRegister = async () => {
     if (!username || !email || !password) {
@@ -52,15 +53,16 @@ function RegisterPage({ goToLogin }) {
   };
 
   const handleVerify = async () => {
-    if (!otp || otp.length !== 6) {
-      setMessage("Please enter a valid 6-digit OTP");
+    const otpValue = otp.join("");
+    if (otpValue.length !== 6) {
+      setMessage("Please enter the complete 6-digit code");
       setIsError(true);
       return;
     }
 
     try {
       setLoading(true);
-      const response = await verifyRegistrationOtp(email, otp);
+      const response = await verifyRegistrationOtp(email, otpValue);
       // response is { message: "..." }
       setMessage(response.message || "Verification successful! Redirecting to login...");
       setIsError(false);
@@ -73,11 +75,28 @@ function RegisterPage({ goToLogin }) {
     }
   };
 
+  const handleOtpChange = (value, index) => {
+    if (isNaN(value)) return;
+    const newOtp = [...otp];
+    newOtp[index] = value.substring(value.length - 1);
+    setOtp(newOtp);
+
+    // Auto focus next
+    if (value && index < 5) {
+      otpRefs[index + 1].current.focus();
+    }
+  };
+
+  const handleKeyDown = (e, index) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      otpRefs[index - 1].current.focus();
+    }
+  };
+
   const handleResend = async () => {
     try {
       setLoading(true);
       const response = await resendVerificationOtp(email);
-      // response might be a string or JSON depending on final service
       const msg = typeof response === "string" ? response : (response.message || "OTP resent!");
       setMessage(msg);
       setIsError(false);
@@ -91,6 +110,10 @@ function RegisterPage({ goToLogin }) {
 
   return (
     <div style={styles.container}>
+      {/* Background blobs for premium feel */}
+      <div style={styles.blob1} />
+      <div style={styles.blob2} />
+      
       <div style={styles.glassCard}>
         <div style={styles.brand}>
           <h1 style={styles.title}>MiniGram</h1>
@@ -136,36 +159,40 @@ function RegisterPage({ goToLogin }) {
                 {loading && stage === "register" ? "Processing..." : "Create Account"}
               </button>
             </>
-          ) : (
-            <>
-              <div style={styles.otpHeader}>
-                <p style={styles.otpText}>
-                  We've sent a 6-digit code to <strong>{email}</strong>.
-                </p>
-              </div>
-              <div style={styles.inputGroup}>
-                <input
-                  type="text"
-                  placeholder="0 0 0 0 0 0"
-                  style={{ ...styles.input, textAlign: "center", letterSpacing: "8px", fontSize: "20px", fontWeight: "700" }}
-                  value={otp}
-                  maxLength={6}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                />
-              </div>
-              <button style={styles.button} onClick={handleVerify} disabled={loading}>
-                {loading ? "Verifying..." : "Verify OTP"}
-              </button>
-              <div style={styles.resendBox}>
-                <p style={styles.footerText}>
-                  Didn't get the code?{" "}
-                  <span style={styles.resendBtn} onClick={handleResend} disabled={loading}>
-                    Resend Code
-                  </span>
-                </p>
-              </div>
-            </>
-          )}
+            ) : (
+              <>
+                <div style={styles.otpHeader}>
+                  <p style={styles.otpText}>
+                    We've sent a 6-digit code to <strong>{email}</strong>.
+                  </p>
+                </div>
+                <div style={styles.otpContainer}>
+                  {otp.map((digit, idx) => (
+                    <input
+                      key={idx}
+                      ref={otpRefs[idx]}
+                      type="text"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleOtpChange(e.target.value, idx)}
+                      onKeyDown={(e) => handleKeyDown(e, idx)}
+                      style={styles.otpInput}
+                    />
+                  ))}
+                </div>
+                <button style={styles.button} onClick={handleVerify} disabled={loading}>
+                  {loading ? "Verifying..." : "Verify OTP"}
+                </button>
+                <div style={styles.resendBox}>
+                  <p style={styles.footerText}>
+                    Didn't get the code?{" "}
+                    <span style={styles.resendBtn} onClick={handleResend}>
+                      Resend Code
+                    </span>
+                  </p>
+                </div>
+              </>
+            )}
 
           {message && (
             <div style={isError ? styles.errorBox : styles.successBox}>
@@ -223,11 +250,33 @@ const styles = {
     background: "#ffffff", fontSize: "15px", outline: "none", boxSizing: "border-box"
   },
   button: {
-    width: "100%", padding: "16px", borderRadius: "16px", border: "none",
-    background: "linear-gradient(135deg, #2563eb, #4f46e5)", color: "#ffffff",
+    width: "100%", padding: "16px", borderRadius: "18px", border: "none",
+    background: "linear-gradient(135deg, #2563eb, #7c3aed)", color: "#ffffff",
     fontSize: "16px", fontWeight: "700", cursor: "pointer",
-    boxShadow: "0 10px 25px rgba(37, 99, 235, 0.25)"
+    boxShadow: "0 10px 25px rgba(37, 99, 235, 0.25)",
+    transition: "all 0.3s ease",
   },
+  otpContainer: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "10px",
+    margin: "10px 0",
+  },
+  otpInput: {
+    width: "50px",
+    height: "60px",
+    borderRadius: "14px",
+    border: "2px solid #e5e7eb",
+    background: "rgba(255, 255, 255, 0.9)",
+    textAlign: "center",
+    fontSize: "24px",
+    fontWeight: "800",
+    color: "#1e293b",
+    outline: "none",
+    transition: "all 0.2s ease",
+  },
+  blob1: { position: "absolute", width: "300px", height: "300px", background: "rgba(37, 99, 235, 0.1)", borderRadius: "50%", top: "-100px", right: "-100px", filter: "blur(60px)", zIndex: -1 },
+  blob2: { position: "absolute", width: "250px", height: "250px", background: "rgba(124, 58, 237, 0.08)", borderRadius: "50%", bottom: "-80px", left: "-80px", filter: "blur(50px)", zIndex: -1 },
   footer: { textAlign: "center", marginTop: "10px" },
   footerText: { fontSize: "14px", color: "#6b7280", margin: 0 },
   link: { color: "#2563eb", fontWeight: "700", cursor: "pointer", marginLeft: "4px" },

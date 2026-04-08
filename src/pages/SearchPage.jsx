@@ -1,19 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { searchUsers } from "../services/userService";
-import { toggleFollow } from "../services/followService";
-import { resolveMediaUrl } from "../utils/media";
-
 const SearchPage = ({ onUserClick, onMessageUser }) => {
   const [keyword, setKeyword] = useState("");
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   const handleSearch = async (val) => {
     setKeyword(val);
@@ -47,11 +35,12 @@ const SearchPage = ({ onUserClick, onMessageUser }) => {
       <div style={styles.searchHeader}>
         <div style={styles.searchTitleRow}>
           <h2 style={styles.title}>Explore Community</h2>
-          <span style={styles.icon}>🔍</span>
+          <span style={styles.glowIcon}>✨</span>
         </div>
         <p style={styles.subtitle}>Discover interesting people and connect globally.</p>
         
         <div style={styles.searchBarWrapper}>
+          <div style={styles.searchIcon}>🔍</div>
           <input
             type="text"
             placeholder="Search by username..."
@@ -72,7 +61,7 @@ const SearchPage = ({ onUserClick, onMessageUser }) => {
         ) : (
           <div style={styles.grid}>
             {users.map((user) => (
-              <div key={user.id} style={styles.userCard} className="settings-card">
+              <div key={user.id} style={styles.userCard}>
                 <div style={styles.cardHeader} onClick={() => onUserClick && onUserClick(user.id)}>
                   {user.profileImageUrl ? (
                     <img src={user.profileImageUrl} style={styles.avatar} alt="u" />
@@ -109,59 +98,101 @@ const SearchPage = ({ onUserClick, onMessageUser }) => {
 };
 
 const styles = {
-  container: { display: "flex", flexDirection: "column", gap: "30px", maxWidth: "900px", margin: "0 auto" },
+  container: { 
+    display: "flex", 
+    flexDirection: "column", 
+    gap: "40px", 
+    maxWidth: "1000px", 
+    margin: "0 auto",
+    padding: "0 20px"
+  },
   searchHeader: {
-    background: "rgba(255, 255, 255, 0.7)",
-    backdropFilter: "blur(12px)",
-    WebkitBackdropFilter: "blur(12px)",
-    borderRadius: "28px",
-    padding: "32px",
-    border: "1px solid rgba(255,255,255,0.3)",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.03)"
+    background: "rgba(255, 255, 255, 0.6)",
+    backdropFilter: "blur(20px)",
+    WebkitBackdropFilter: "blur(20px)",
+    borderRadius: "32px",
+    padding: "40px",
+    border: "1px solid rgba(255,255,255,0.4)",
+    boxShadow: "0 20px 50px rgba(0,0,0,0.02)",
+    marginBottom: "10px"
   },
   searchTitleRow: { display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" },
-  title: { margin: 0, fontSize: "28px", fontWeight: "800", color: "#111827", letterSpacing: "-1px" },
-  icon: { fontSize: "24px" },
-  subtitle: { margin: 0, color: "#6b7280", fontSize: "16px", marginBottom: "24px" },
-  searchBarWrapper: { position: "relative" },
+  title: { margin: 0, fontSize: "32px", fontWeight: "900", color: "#111827", letterSpacing: "-1.5px" },
+  glowIcon: { fontSize: "28px", animation: "glowPulse 2s infinite" },
+  subtitle: { margin: 0, color: "#64748b", fontSize: "17px", marginBottom: "32px", fontWeight: "500" },
+  searchBarWrapper: { position: "relative", display: "flex", alignItems: "center" },
+  searchIcon: { position: "absolute", left: "20px", fontSize: "18px", color: "#94a3b8" },
   searchInput: {
     width: "100%",
-    padding: "16px 20px",
-    borderRadius: "18px",
-    border: "1px solid #e5e7eb",
+    padding: "18px 20px 18px 52px",
+    borderRadius: "20px",
+    border: "1px solid #e2e8f0",
     background: "#fff",
     fontSize: "16px",
+    fontWeight: "600",
+    color: "#1e293b",
     outline: "none",
     boxSizing: "border-box",
-    transition: "border-color 0.2s ease, box-shadow 0.2s ease",
-    ":focus": { borderColor: "#2563eb", boxShadow: "0 0 0 4px rgba(37,99,235,0.1)" }
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.02)",
   },
   resultArea: { minHeight: "200px" },
-  infoBox: { textAlign: "center", padding: "40px", color: "#9ca3af", fontStyle: "italic" },
-  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "20px" },
+  infoBox: { textAlign: "center", padding: "60px", color: "#94a3b8", fontStyle: "italic", fontWeight: "500" },
+  grid: { 
+    display: "grid", 
+    gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", 
+    gap: "24px",
+    animation: "fadeIn 0.5s ease"
+  },
   userCard: {
-    background: "#fff",
-    borderRadius: "24px",
-    padding: "20px",
-    border: "1px solid #f3f4f6",
+    background: "rgba(255, 255, 255, 0.8)",
+    backdropFilter: "blur(10px)",
+    borderRadius: "28px",
+    padding: "24px",
+    border: "1px solid rgba(255, 255, 255, 0.5)",
     display: "flex",
     flexDirection: "column",
-    gap: "16px",
+    gap: "20px",
+    transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.02)",
+    cursor: "default",
+  },
+  cardHeader: { display: "flex", alignItems: "center", gap: "16px", cursor: "pointer" },
+  avatar: { 
+    width: "64px", 
+    height: "64px", 
+    borderRadius: "20px", 
+    objectFit: "cover",
+    boxShadow: "0 8px 16px rgba(0,0,0,0.05)"
+  },
+  avatarInitial: {
+    width: "64px", height: "64px", borderRadius: "20px", 
+    background: "linear-gradient(135deg, #eff6ff, #dbeafe)",
+    color: "#2563eb", display: "flex", alignItems: "center", 
+    justifyContent: "center", fontWeight: "900", fontSize: "24px",
+    boxShadow: "0 8px 16px rgba(0,0,0,0.05)"
+  },
+  userInfo: { minWidth: 0, flex: 1 },
+  userName: { fontWeight: "800", color: "#111827", fontSize: "17px", marginBottom: "2px" },
+  userBio: { fontSize: "13px", color: "#64748b", fontWeight: "500", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  actions: { display: "flex", gap: "12px" },
+  followBtn: { 
+    flex: 1, padding: "12px", borderRadius: "14px", border: "none", 
+    background: "linear-gradient(135deg, #2563eb, #7c3aed)", color: "#fff", 
+    fontWeight: "800", cursor: "pointer", fontSize: "13px",
+    boxShadow: "0 4px 12px rgba(37, 99, 235, 0.2)",
     transition: "all 0.3s ease"
   },
-  cardHeader: { display: "flex", alignItems: "center", gap: "14px", cursor: "pointer" },
-  avatar: { width: "56px", height: "56px", borderRadius: "18px", objectFit: "cover" },
-  avatarInitial: {
-    width: "56px", height: "56px", borderRadius: "18px", background: "linear-gradient(135deg, #eff6ff, #dbeafe)",
-    color: "#2563eb", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "800", fontSize: "22px"
+  followingBtn: { 
+    flex: 1, padding: "12px", borderRadius: "14px", border: "1px solid #e2e8f0", 
+    background: "#fff", color: "#475569", fontWeight: "800", cursor: "pointer", fontSize: "13px" 
   },
-  userInfo: { minWidth: 0 },
-  userName: { fontWeight: "700", color: "#111827", fontSize: "16px" },
-  userBio: { fontSize: "12px", color: "#9ca3af", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-  actions: { display: "flex", gap: "10px" },
-  followBtn: { flex: 1, padding: "10px", borderRadius: "12px", border: "none", background: "#2563eb", color: "#fff", fontWeight: "700", cursor: "pointer" },
-  followingBtn: { flex: 1, padding: "10px", borderRadius: "12px", border: "1px solid #e5e7eb", background: "#f9fafb", color: "#374151", fontWeight: "700", cursor: "pointer" },
-  messageBtn: { flex: 1, padding: "10px", borderRadius: "12px", border: "1px solid rgba(139, 92, 246, 0.2)", background: "rgba(139, 92, 246, 0.05)", color: "#7c3aed", fontWeight: "700", cursor: "pointer" }
+  messageBtn: { 
+    flex: 1, padding: "12px", borderRadius: "14px", 
+    border: "1px solid rgba(124, 58, 237, 0.1)", 
+    background: "rgba(124, 58, 237, 0.05)", color: "#7c3aed", 
+    fontWeight: "800", cursor: "pointer", fontSize: "13px" 
+  }
 };
 
 export default SearchPage;

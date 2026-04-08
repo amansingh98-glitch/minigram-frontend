@@ -34,12 +34,12 @@ const Sidebar = ({ onLogout, activePage = "home", onNavigate }) => {
               key={item.key}
               style={{
                 ...styles.menuItem,
-                background: activePage === item.key ? "rgba(37, 99, 235, 0.08)" : "transparent",
-                color: activePage === item.key ? "#2563eb" : "#4b5563",
+                background: activePage === item.key ? "rgba(37, 99, 235, 0.1)" : "transparent",
+                color: activePage === item.key ? "var(--primary-accent)" : "var(--text-muted)",
               }}
               onClick={() => onNavigate && onNavigate(item.key)}
             >
-              <span style={{ ...styles.icon, transform: activePage === item.key ? "scale(1.2)" : "scale(1)" }}>
+              <span style={{ ...styles.icon, transform: activePage === item.key ? "scale(1.15)" : "scale(1)" }}>
                 {item.icon}
               </span>
               {expanded && <span style={styles.label}>{item.label}</span>}
@@ -65,10 +65,10 @@ const styles = {
     top: 0,
     left: 0,
     height: "100vh",
-    backgroundColor: "rgba(255, 255, 255, 0.85)",
-    backdropFilter: "blur(16px)",
-    WebkitBackdropFilter: "blur(16px)",
-    borderRight: "1px solid rgba(229, 231, 235, 0.5)",
+    backgroundColor: "var(--glass-bg)",
+    backdropFilter: "var(--glass-blur)",
+    WebkitBackdropFilter: "var(--glass-blur)",
+    borderRight: "1px solid var(--glass-border)",
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
@@ -80,9 +80,10 @@ const styles = {
   logoItem: { display: "flex", alignItems: "center", gap: "12px", padding: "0 12px", height: "40px" },
   logoCircle: {
      width: "32px", height: "32px", borderRadius: "10px", 
-     background: "linear-gradient(135deg, #2563eb, #4f46e5)",
+     background: "linear-gradient(135deg, var(--primary-accent), var(--secondary-accent))",
      color: "#fff", display: "flex", alignItems: "center", 
-     justifyContent: "center", fontWeight: "900", fontSize: "16px"
+     justifyContent: "center", fontWeight: "900", fontSize: "16px",
+     boxShadow: "0 4px 12px rgba(37, 99, 235, 0.2)"
   },
   logoText: { fontSize: "20px", fontWeight: "900", letterSpacing: "-1px", color: "#111827" },
   nav: { display: "flex", flexDirection: "column", gap: "8px" },
@@ -95,7 +96,7 @@ const styles = {
   label: { fontSize: "15px", fontWeight: "700", whiteSpace: "nowrap" },
   activeIndicator: {
     position: "absolute", left: "-6px", top: "25%", bottom: "25%", 
-    width: "4px", background: "#2563eb", borderRadius: "0 4px 4px 0"
+    width: "4px", background: "var(--primary-accent)", borderRadius: "0 4px 4px 0"
   },
   bottomSection: { marginTop: "auto" },
   logoutItem: {

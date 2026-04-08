@@ -19,6 +19,7 @@ import {
 } from "../services/notificationService";
 import { setOnline, setOffline, connectGlobalSocket, disconnectGlobalSocket } from "../services/chatService";
 import { resolveMediaUrl } from "../utils/media";
+import MobileSuggestions from "../components/MobileSuggestions";
 
 const HomePage = ({ onLogout }) => {
   const [activePage, setActivePage] = useState("home");
@@ -164,6 +165,7 @@ const HomePage = ({ onLogout }) => {
                 setSelectedImage={setSelectedImage}
                 onCreatePost={handleCreatePost}
               />
+              {isMobile && <MobileSuggestions onUserClick={handleOpenUserProfile} />}
               <Feed
                 posts={posts}
                 loading={loading}
@@ -198,7 +200,7 @@ const HomePage = ({ onLogout }) => {
           </div>
 
           <div style={styles.navIcons}>
-            <div style={styles.userCapsule}>
+            <div style={styles.userCapsule} onClick={handleOpenMyProfile} title="My Profile">
                {currentUserImage ? (
                  <img src={currentUserImage} style={styles.navAvatar} alt="me" />
                ) : (
@@ -272,15 +274,16 @@ const styles = {
     right: 0,
     left: isMobile ? 0 : "80px",
     height: "72px",
-    backgroundColor: "rgba(255, 255, 255, 0.85)",
-    backdropFilter: "blur(12px)",
-    WebkitBackdropFilter: "blur(12px)",
-    borderBottom: "1px solid rgba(229, 231, 235, 0.5)",
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
+    backdropFilter: "blur(20px)",
+    WebkitBackdropFilter: "blur(20px)",
+    borderBottom: "1px solid rgba(255, 255, 255, 0.3)",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     padding: isMobile ? "0 16px" : "0 32px",
-    zIndex: 1000,
+    zIndex: 2000,
+    boxShadow: "0 4px 10px rgba(0,0,0,0.02)",
   }),
   logoBox: { display: "flex", alignItems: "center", gap: "10px" },
   logoCircle: {

@@ -123,9 +123,9 @@ const ReelsPage = ({ posts, onUpdate }) => {
   if (!videoPosts.length) {
     return (
       <div style={styles.empty}>
-        <div style={{ fontSize: "50px" }}>🎬</div>
-        <h2 style={{ margin: "20px 0 10px" }}>No Reels Found</h2>
-        <p style={{ color: "#6b7280" }}>Start sharing some high-energy moments!</p>
+        <div style={{ fontSize: "60px", marginBottom: "20px" }}>🎬</div>
+        <h2 style={{ fontSize: "24px", fontWeight: "800", color: "#111827", margin: "0 0 8px" }}>No Reels Found</h2>
+        <p style={{ color: "#64748b", fontWeight: "500" }}>Be the first to share an immersive moment!</p>
       </div>
     );
   }
@@ -144,12 +144,13 @@ const ReelsPage = ({ posts, onUpdate }) => {
 const styles = {
   page: { 
     width: "100%", 
-    height: "calc(100vh - 120px)", 
+    height: "calc(100vh - 100px)", 
     display: "flex", 
     justifyContent: "center", 
     background: "#000",
     borderRadius: "32px",
-    overflow: "hidden"
+    overflow: "hidden",
+    boxShadow: "0 20px 60px rgba(0,0,0,0.4)"
   },
   scrollBox: {
     width: "100%", maxWidth: "450px", height: "100%", overflowY: "scroll",
@@ -158,18 +159,43 @@ const styles = {
   reelWrapper: { width: "100%", height: "100%", scrollSnapAlign: "start", position: "relative" },
   videoContainer: { width: "100%", height: "100%", position: "relative", cursor: "pointer" },
   video: { width: "100%", height: "100%", objectFit: "cover" },
-  playOverlay: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "60px", color: "rgba(255,255,255,0.4)", pointerEvents: "none" },
-  infoOverlay: { position: "absolute", bottom: "30px", left: "20px", right: "80px", color: "#fff", zIndex: 10 },
-  userInfo: { display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" },
-  avatar: { width: "42px", height: "42px", borderRadius: "14px", border: "2px solid #fff" },
-  avatarInit: { width: "42px", height: "42px", borderRadius: "14px", border: "2px solid #fff", background: "#2563eb", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700" },
-  userName: { fontWeight: "800", fontSize: "16px", textShadow: "0 2px 4px rgba(0,0,0,0.5)" },
-  caption: { fontSize: "14px", margin: 0, opacity: 0.9, textShadow: "0 1px 2px rgba(0,0,0,0.5)", lineHeight: "1.5" },
-  actionSidebar: { position: "absolute", bottom: "40px", right: "15px", display: "flex", flexDirection: "column", gap: "24px", alignItems: "center", zIndex: 10 },
-  actionItem: { display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" },
-  actionCircle: { width: "48px", height: "48px", borderRadius: "50%", background: "rgba(255,255,255,0.15)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer" },
-  actionCount: { fontSize: "12px", color: "#fff", fontWeight: "700", textShadow: "0 2px 4px rgba(0,0,0,0.5)" },
-  empty: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "60vh", textAlign: "center", background: "#fff", borderRadius: "32px", border: "1px solid #f3f4f6" }
+  playOverlay: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "70px", color: "rgba(255,255,255,0.3)", pointerEvents: "none", background: "rgba(0,0,0,0.1)" },
+  infoOverlay: { 
+    position: "absolute", 
+    bottom: "0", 
+    left: "0", 
+    right: "0", 
+    padding: "60px 20px 40px",
+    background: "linear-gradient(transparent, rgba(0,0,0,0.8))",
+    color: "#fff", 
+    zIndex: 10 
+  },
+  userInfo: { display: "flex", alignItems: "center", gap: "12px", marginBottom: "14px" },
+  avatar: { width: "44px", height: "44px", borderRadius: "15px", border: "2px solid rgba(255,255,255,0.5)", objectFit: "cover" },
+  avatarInit: { width: "44px", height: "44px", borderRadius: "15px", border: "2px solid rgba(255,255,255,0.5)", background: "linear-gradient(135deg, #2563eb, #7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "800" },
+  userName: { fontWeight: "800", fontSize: "16px", letterSpacing: "-0.3px" },
+  caption: { fontSize: "14px", margin: 0, opacity: 0.95, lineHeight: "1.5", fontWeight: "500", display: "-webkit-box", WebkitLineClamp: "3", WebkitBoxOrient: "vertical", overflow: "hidden" },
+  actionSidebar: { position: "absolute", bottom: "40px", right: "12px", display: "flex", flexDirection: "column", gap: "22px", alignItems: "center", zIndex: 10 },
+  actionItem: { display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" },
+  actionCircle: { 
+    width: "50px", 
+    height: "50px", 
+    borderRadius: "50%", 
+    background: "rgba(255,255,255,0.15)", 
+    backdropFilter: "blur(20px)", 
+    WebkitBackdropFilter: "blur(20px)", 
+    display: "flex", 
+    alignItems: "center", 
+    justifyContent: "center", 
+    fontSize: "22px", 
+    border: "1px solid rgba(255,255,255,0.25)", 
+    cursor: "pointer",
+    transition: "transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+    boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+    ":active": { transform: "scale(0.9)" }
+  },
+  actionCount: { fontSize: "12px", color: "#fff", fontWeight: "800", textShadow: "0 2px 8px rgba(0,0,0,0.5)" },
+  empty: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "60vh", textAlign: "center", background: "rgba(255, 255, 255, 0.7)", backdropFilter: "blur(20px)", borderRadius: "40px", border: "1px solid rgba(255,255,255,0.4)" }
 };
 
 export default ReelsPage;
