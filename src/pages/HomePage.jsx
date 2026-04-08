@@ -10,7 +10,9 @@ import ChatPage from "./ChatPage";
 import SearchPage from "./SearchPage";
 import SettingsPage from "./SettingsPage";
 import ReelsPage from "./ReelsPage";
-import { createPost, getAllPosts } from "../services/postService";
+import NotificationsPage from "./NotificationsPage";
+import SinglePostModal from "../components/SinglePostModal";
+import { createPost, getAllPosts, getPostById } from "../services/postService";
 import { getMyProfile } from "../services/userService";
 import {
   getNotifications,
@@ -39,6 +41,8 @@ const HomePage = ({ onLogout }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [toastMessage, setToastMessage] = useState(null);
   const [isStoryOpen, setIsStoryOpen] = useState(false);
+  const [selectedNotificationPost, setSelectedNotificationPost] = useState(null);
+  const [showPostModal, setShowPostModal] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -160,6 +164,23 @@ const HomePage = ({ onLogout }) => {
     setActivePage("messages");
   };
 
+  const handleOpenNotificationPost = async (postId) => {
+    try {
+      const post = await getPostById(postId);
+      if (post) {
+        setSelectedNotificationPost({
+          ...post,
+          imageUrl: resolveMediaUrl(post.imageUrl),
+          videoUrl: resolveMediaUrl(post.videoUrl),
+          profileImageUrl: resolveMediaUrl(post.profileImageUrl),
+        });
+        setShowPostModal(true);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const handleNavigate = (page) => {
     setActivePage(page === "explore" ? "home" : page);
     if (page === "profile") setSelectedProfileUserId(null);
@@ -169,9 +190,16 @@ const HomePage = ({ onLogout }) => {
     switch (activePage) {
       case "messages": return <ChatPage initialSelectedUser={selectedChatUser} />;
       case "profile": return <ProfilePage userId={selectedProfileUserId} onMessageUser={handleOpenChat} />;
-      case "search": return <SearchPage onUserClick={handleOpenUserProfile} onMessageUser={handleOpenChat} />;
       case "settings": return <SettingsPage onLogout={onLogout} onOpenProfile={handleOpenMyProfile} />;
       case "reels": return <ReelsPage posts={posts} onUpdate={loadPosts} />;
+      case "notifications": return (
+        <NotificationsPage 
+          notifications={notifications} 
+          onUpdate={() => { loadNotifications(); loadUnreadCount(); }} 
+          onUserClick={handleOpenUserProfile}
+          onPostClick={handleOpenNotificationPost}
+        />
+      );
       default:
         return (
           <div style={styles.mainFeedGrid(isMobile)}>
@@ -232,27 +260,12 @@ const HomePage = ({ onLogout }) => {
             
             <div style={styles.relative} onClick={e => e.stopPropagation()}>
                <div style={styles.iconBtn} onClick={() => { 
-                 const nextShow = !showNotifications;
-                 setShowNotifications(nextShow); 
-                 if (nextShow && unreadCount > 0) {
+                 handleNavigate("notifications");
+                 if (unreadCount > 0) {
                    markNotificationsAsRead().then(() => setUnreadCount(0)).catch(console.error);
                  }
                }}>🔔</div>
                {unreadCount > 0 && <div style={styles.redBadge}>{unreadCount}</div>}
-               {showNotifications && (
-                 <div style={styles.notifDropdown}>
-                    <div style={styles.notifHeader}>Recent Notifications</div>
-                    {notifications.length === 0 ? (
-                      <p style={styles.emptyNotif}>All caught up! ✨</p>
-                    ) : (
-                      notifications.map(n => (
-                        <div key={n.id} style={styles.notifItem}>
-                           {n.messageText || "New interaction"}
-                        </div>
-                      ))
-                    )}
-                 </div>
-               )}
             </div>
             <div style={styles.iconBtn} onClick={() => handleNavigate("settings")}>☰</div>
           </div>
@@ -277,6 +290,13 @@ const HomePage = ({ onLogout }) => {
            </div>
         </div>
       )}
+
+      <SinglePostModal 
+        isOpen={showPostModal} 
+        post={selectedNotificationPost} 
+        onClose={() => setShowPostModal(false)} 
+        onUpdate={loadPosts}
+      />
     </div>
   );
 };

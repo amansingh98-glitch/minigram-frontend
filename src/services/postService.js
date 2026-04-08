@@ -27,6 +27,16 @@ export const getAllPosts = async () => {
   return raw ? JSON.parse(raw) : [];
 };
 
+export const getPostById = async (postId) => {
+  const userEmail = getUserEmail();
+  const response = await fetch(`${API_BASE_URL}/posts/${postId}?userEmail=${encodeURIComponent(userEmail)}`, {
+    method: "GET"
+  });
+  const raw = await response.text();
+  if (!response.ok) throw new Error(raw || "Failed to fetch post");
+  return raw ? JSON.parse(raw) : null;
+};
+
 export const createPost = async (content, imageFile) => {
   const userEmail = getUserEmail();
 

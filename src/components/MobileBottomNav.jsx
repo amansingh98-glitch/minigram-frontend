@@ -5,6 +5,7 @@ const MobileBottomNav = ({ activePage, onNavigate }) => {
     { icon: "🏠", label: "Home", key: "home" },
     { icon: "🔍", label: "Search", key: "search" },
     { icon: "🎬", label: "Reels", key: "reels" },
+    { icon: "🔔", label: "Inbox", key: "notifications" },
     { icon: "💬", label: "Chat", key: "messages" },
     { icon: "👤", label: "Profile", key: "profile" },
   ];
