@@ -189,6 +189,7 @@ const HomePage = ({ onLogout }) => {
   const renderPage = () => {
     switch (activePage) {
       case "messages": return <ChatPage initialSelectedUser={selectedChatUser} />;
+      case "search": return <SearchPage />;
       case "profile": return <ProfilePage userId={selectedProfileUserId} onMessageUser={handleOpenChat} />;
       case "settings": return <SettingsPage onLogout={onLogout} onOpenProfile={handleOpenMyProfile} />;
       case "reels": return <ReelsPage posts={posts} onUpdate={loadPosts} />;

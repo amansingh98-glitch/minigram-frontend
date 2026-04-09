@@ -3,6 +3,7 @@ import {
   connectChatSocket,
   deleteMessageForEveryone,
   deleteMessageForMe,
+  deleteConversation,
   getMessages,
   sendFileMessage,
   sendMessage,
@@ -113,6 +114,37 @@ const ChatWindow = ({ selectedUser, onMessageSent, isMobile, onBackClick }) => {
     }
   };
 
+  const handleDeleteChat = async () => {
+    if (!selectedUserId || !window.confirm("Are you sure you want to delete this entire chat?")) return;
+    try {
+      await deleteConversation(selectedUserId);
+      if (onBackClick) onBackClick();
+      if (onMessageSent) await onMessageSent();
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const handleDeleteForMe = async (msgId) => {
+    try {
+      await deleteMessageForMe(msgId);
+      setMenuMessageId(null);
+      await loadMessages();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleDeleteForEveryone = async (msgId) => {
+    try {
+      await deleteMessageForEveryone(msgId);
+      setMenuMessageId(null);
+      await loadMessages();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const handleReact = async (messageId, reaction) => {
     try {
       await reactToMessage(messageId, reaction);
@@ -201,6 +233,9 @@ const ChatWindow = ({ selectedUser, onMessageSent, isMobile, onBackClick }) => {
             </div>
           </div>
         </div>
+        <div style={styles.headerRight}>
+           <button style={styles.headerActionBtn} onClick={handleDeleteChat} title="Delete Chat">🗑️</button>
+        </div>
       </header>
 
       {/* Messages */}
@@ -227,6 +262,10 @@ const ChatWindow = ({ selectedUser, onMessageSent, isMobile, onBackClick }) => {
               {menuMessageId === m.id && (
                 <div style={styles.msgMenu(m.currentUserMessage)} onClick={e => e.stopPropagation()}>
                   <button style={styles.menuBtn} onClick={() => { setReplyToMessage(m); setMenuMessageId(null); }}>Reply</button>
+                  <button style={styles.menuBtn} onClick={() => handleDeleteForMe(m.id)}>Delete for Me</button>
+                  {m.currentUserMessage && (
+                    <button style={{...styles.menuBtn, color: '#ef4444'}} onClick={() => handleDeleteForEveryone(m.id)}>Delete for Everyone</button>
+                  )}
                   <div style={styles.reactionRow}>
                     {['❤️', '👍', '😂', '🔥'].map(e => (
                       <span key={e} style={styles.reactionIcon} onClick={() => handleReact(m.id, e)}>{e}</span>
@@ -276,7 +315,10 @@ const styles = {
   headerInitial: { width: "42px", height: "42px", borderRadius: "14px", background: "linear-gradient(135deg, #2563eb, #4f46e5)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "800", fontSize: "18px" },
   headerName: { fontWeight: "800", color: "#111827", fontSize: "16px", letterSpacing: "-0.3px" },
   headerStatus: { fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center", gap: "6px", fontWeight: "500" },
+  headerRight: { display: "flex", alignItems: "center", gap: "12px" },
+  headerActionBtn: { background: "none", border: "none", fontSize: "18px", cursor: "pointer", opacity: 0.6, transition: "opacity 0.2s ease" },
   onlineDot: { width: "8px", height: "8px", background: "#10b981", borderRadius: "50%", boxShadow: "0 0 10px rgba(16,185,129,0.5)" },
+  typing: { color: "#2563eb", fontWeight: "700", animation: "pulse 1.5s infinite" },
   backBtn: { background: "none", border: "none", fontSize: "20px", cursor: "pointer", marginRight: "8px" },
   messageArea: { flex: 1, overflowY: "auto", padding: "20px", display: "flex", flexDirection: "column", gap: "12px", scrollbarWidth: "none" },
   msgRow: (mine) => ({ display: "flex", justifyContent: mine ? "flex-end" : "flex-start", animation: "msgIn 0.3s ease-out forwards" }),
@@ -324,6 +366,11 @@ const chatAnimations = `
 @keyframes typingDot {
   0%, 80%, 100% { transform: scale(0); }
   40% { transform: scale(1); }
+}
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
 }
 `;
 

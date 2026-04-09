@@ -201,6 +201,25 @@ export const deleteMessageForEveryone = async (messageId) => {
   return raw;
 };
 
+export const deleteConversation = async (otherUserId) => {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${API_BASE_URL}/chat/delete-conversation/${otherUserId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const raw = await response.text();
+
+  if (!response.ok) {
+    throw new Error(raw || "Failed to delete conversation");
+  }
+
+  return raw;
+};
+
 export const connectChatSocket = async ({
   currentUserId,
   selectedUserId,
