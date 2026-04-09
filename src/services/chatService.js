@@ -269,6 +269,7 @@ export const connectChatSocket = async ({
 
   client.onConnect = () => {
     isConnecting = false;
+    console.log("WebSocket connected successfully to /ws-chat");
 
     client.subscribe(`/topic/chat/${currentUserId}/${selectedUserId}`, (message) => {
       const payload = JSON.parse(message.body);
@@ -300,7 +301,7 @@ export const connectChatSocket = async ({
 
   client.onStompError = (frame) => {
     isConnecting = false;
-    console.error("STOMP error:", frame);
+    console.error("STOMP error details:", frame);
   };
 
   client.onWebSocketError = (error) => {
